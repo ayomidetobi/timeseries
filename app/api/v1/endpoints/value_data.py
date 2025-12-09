@@ -63,6 +63,21 @@ async def get_value_data(
       ...
     ]
     """
+    # Validate series_name filters - if either is provided, at least one must have a valid value
+    has_ilike = filters.series_name__ilike is not None
+    has_in = filters.series_name__in is not None
+    
+    if has_ilike or has_in:
+        # Check if at least one has a valid value
+        ilike_valid = has_ilike and filters.series_name__ilike and filters.series_name__ilike.strip()
+        in_valid = has_in and filters.series_name__in and any(name and name.strip() for name in filters.series_name__in)
+        
+        if not (ilike_valid or in_valid):
+            raise HTTPException(
+                status_code=400,
+                detail="At least one of series_name__ilike or series_name__in must have a valid value. Series names are required."
+            )
+    
     value_data_list = await crud_value_data.get_multi_with_filters(db=session, filter_obj=filters)
     
     # Group value data by metadata (series_id)
