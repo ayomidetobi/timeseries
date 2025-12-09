@@ -32,7 +32,7 @@ async def get_value_data(
     - Direct ValueData: series_id, timestamp__gte, timestamp__lte, timestamp__ago, is_latest, value__gte, value__lte
     - timestamp__ago: Humanized time string (e.g., "1y", "2y", "20m", "6mo", "1w") - filters data from X time ago to now
     - MetaSeries: series_name__ilike, ticker__ilike, is_active, is_derived
-    - Lookup tables (by name): asset_class_name, sub_asset_class_name, product_type_name, data_type_name, 
+    - Lookup tables (by name): asset_class_name, sub_asset_class_name, product_type_name, data_type_name,
       structure_type_name, market_segment_name, field_type_name
     - All lookup table filters support __in for multiple values (e.g., asset_class_name__in)
     - Use order_by parameter for sorting (e.g., order_by=["-timestamp", "series_id"])
@@ -63,20 +63,26 @@ async def get_value_data(
       ...
     ]
     """
-    # Validate series_name filters - if either is provided, at least one must have a valid value
+    # Validate series_name filters - at least one is required and must have a valid value
     has_ilike = filters.series_name__ilike is not None
     has_in = filters.series_name__in is not None
     
-    if has_ilike or has_in:
-        # Check if at least one has a valid value
-        ilike_valid = has_ilike and filters.series_name__ilike and filters.series_name__ilike.strip()
-        in_valid = has_in and filters.series_name__in and any(name and name.strip() for name in filters.series_name__in)
-        
-        if not (ilike_valid or in_valid):
-            raise HTTPException(
-                status_code=400,
-                detail="At least one of series_name__ilike or series_name__in must have a valid value. Series names are required."
-            )
+    # Check if at least one filter is provided
+    if not (has_ilike or has_in):
+        raise HTTPException(
+            status_code=400,
+            detail="At least one of series_name__ilike or series_name__in is required. Series names are required."
+        )
+    
+    # Check if at least one has a valid value
+    ilike_valid = has_ilike and filters.series_name__ilike and filters.series_name__ilike.strip()
+    in_valid = has_in and filters.series_name__in and any(name and name.strip() for name in filters.series_name__in)
+    
+    if not (ilike_valid or in_valid):
+        raise HTTPException(
+            status_code=400,
+            detail="At least one of series_name__ilike or series_name__in must have a valid value. Series names are required."
+        )
     
     value_data_list = await crud_value_data.get_multi_with_filters(db=session, filter_obj=filters)
     
