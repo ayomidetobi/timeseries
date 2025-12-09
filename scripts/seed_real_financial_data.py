@@ -414,9 +414,9 @@ async def create_meta_series(session, lookup_maps: Dict, num_series: int = 200) 
         
         # Commit in batches
         if batch_series:
-            await session.commit()
+    await session.commit()
             for ms in batch_series:
-                await session.refresh(ms)
+        await session.refresh(ms)
             print(f"  Created batch {i // batch_size + 1}: {len(batch_series)} series")
     
     print(f"✅ Created {len(meta_series_list)} meta series")
