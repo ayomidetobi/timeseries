@@ -1,4 +1,5 @@
 """Dependencies endpoints."""
+
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_filter import FilterDepends
@@ -61,4 +62,3 @@ async def create_calculation(
 ):
     """Create a new calculation log."""
     return await crud_calculation.create(db=session, obj_in=calculation)
-

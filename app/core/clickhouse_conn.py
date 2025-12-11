@@ -1,4 +1,5 @@
 """ClickHouse connection management with SQLAlchemy engine support."""
+
 import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
@@ -44,7 +45,9 @@ class clickHouseConnectionManager:
             self.sqlalchemy_engine = create_engine(uri)
 
         except Exception as error:
-            raise RuntimeError(f"Failed to initialize ClickHouse connection: {error}") from error
+            raise RuntimeError(
+                f"Failed to initialize ClickHouse connection: {error}"
+            ) from error
 
     def close(self) -> None:
         """Close the ClickHouse client connection."""
@@ -87,7 +90,9 @@ def is_initialized() -> bool:
     return _clickhouse_connection_manager.is_initialized()
 
 
-async def get_clickhouse_client() -> AsyncGenerator[clickhouse_connect.driver.Client, None]:
+async def get_clickhouse_client() -> (
+    AsyncGenerator[clickhouse_connect.driver.Client, None]
+):
     """FastAPI dependency to get ClickHouse client."""
     if not _clickhouse_connection_manager.is_initialized():
         raise RuntimeError("ClickHouse client not initialized. Call init() first.")
@@ -97,7 +102,9 @@ async def get_clickhouse_client() -> AsyncGenerator[clickhouse_connect.driver.Cl
 
 
 @asynccontextmanager
-async def get_clickhouse_client_context() -> AsyncGenerator[clickhouse_connect.driver.Client, None]:
+async def get_clickhouse_client_context() -> (
+    AsyncGenerator[clickhouse_connect.driver.Client, None]
+):
     """Context manager version of ClickHouse client dependency."""
     if not _clickhouse_connection_manager.is_initialized():
         raise RuntimeError("ClickHouse client not initialized. Call init() first.")
@@ -122,6 +129,9 @@ async def clickhouse_health_check(timeout: float = 5.0) -> None:
             raise RuntimeError(f"ClickHouse health check failed: {error}") from error
 
     loop = asyncio.get_event_loop()
-    await asyncio.wait_for(loop.run_in_executor(None, _sync_health_check), timeout=timeout)
-    
+    await asyncio.wait_for(
+        loop.run_in_executor(None, _sync_health_check), timeout=timeout
+    )
+
+
 Base = get_declarative_base()

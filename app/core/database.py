@@ -3,6 +3,7 @@
 This includes a function `get_session()` to be used as a FastAPI dependency
 to get a database session in endpoints.
 """
+
 import asyncio
 import contextlib
 from typing import AsyncGenerator
@@ -29,7 +30,7 @@ class databaseConnectionManager:
 
     def init(self):
         """Initialize the database engine and session maker.
-        
+
         TimescaleModel will handle hypertable creation when tables are created via migrations.
         """
         self.engine = sa_asyncio.create_async_engine(
@@ -49,8 +50,7 @@ class databaseConnectionManager:
         )
 
     @contextlib.asynccontextmanager
-    async def make_session(
-            self) -> AsyncGenerator[sa_asyncio.AsyncSession, None]:
+    async def make_session(self) -> AsyncGenerator[sa_asyncio.AsyncSession, None]:
         """Create a database session as a context manager."""
         if self.sessionmaker is None:
             raise RuntimeError("Database not initialized. Call init() first.")
@@ -66,7 +66,8 @@ class databaseConnectionManager:
 # make it possible to import this module without having to connect to the database.
 # This is useful for unit tests.
 _db_connection_manager: databaseConnectionManager = databaseConnectionManager(
-    app.core.config.settings)
+    app.core.config.settings
+)
 
 
 def init():
@@ -81,8 +82,7 @@ async def get_session() -> AsyncGenerator[sa_asyncio.AsyncSession, None]:
 
 
 @contextlib.asynccontextmanager
-async def get_session_context(
-) -> AsyncGenerator[sa_asyncio.AsyncSession, None]:
+async def get_session_context() -> AsyncGenerator[sa_asyncio.AsyncSession, None]:
     """Equal to `get_session()`, but using a context manager.
 
     While `get_session()` is a dependency that can be used in FastAPI
@@ -104,13 +104,13 @@ def pool_status() -> str:
     """Get the status of the database connection pool."""
     if _db_connection_manager.engine is None:
         return "Pool Status: Database not initialized"
-    
+
     try:
         # Access the underlying sync engine pool for status
         sync_engine = _db_connection_manager.engine.sync_engine
-        if not (hasattr(sync_engine, 'pool') and sync_engine.pool):
+        if not (hasattr(sync_engine, "pool") and sync_engine.pool):
             return "Pool Status: Pool not available"
-        
+
         pool = sync_engine.pool
         status = pool.status()
         return f"Pool Status: {status}"
@@ -136,7 +136,5 @@ async def db_health_check(timeout: float = 5.0) -> None:
     if _db_connection_manager.engine is None:
         raise RuntimeError("Database not initialized.")
 
-    async with sa_asyncio.AsyncSession(
-            _db_connection_manager.engine) as session:
-        await asyncio.wait_for(session.execute(sa.text("SELECT 1")),
-                               timeout=timeout)
+    async with sa_asyncio.AsyncSession(_db_connection_manager.engine) as session:
+        await asyncio.wait_for(session.execute(sa.text("SELECT 1")), timeout=timeout)

@@ -1,4 +1,5 @@
 """CRUD operations for the application."""
+
 from app.crud.base import crudBase
 from app.crud.meta_series import crud_meta_series
 from app.crud.dependencies import crud_dependency, crud_calculation
@@ -12,4 +13,3 @@ __all__ = [
     "crud_asset_class",
     "crud_product_type",
 ]
-

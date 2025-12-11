@@ -1,13 +1,22 @@
 """Lookup tables endpoints."""
+
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.models.lookup_tables import assetClassLookup, productTypeLookup
-from app.schemas.filters import assetClassFilter, productTypeFilter
-from app.crud.lookup_tables import crud_asset_class, crud_product_type
+from app.models.lookup_tables import (
+    assetClassLookup,
+    productTypeLookup,
+    tickerSourceLookup,
+)
+from app.schemas.filters import assetClassFilter, productTypeFilter, tickerSourceFilter
+from app.crud.lookup_tables import (
+    crud_asset_class,
+    crud_product_type,
+    crud_ticker_source,
+)
 
 router = APIRouter()
 
@@ -51,7 +60,9 @@ async def get_product_types(
     session: AsyncSession = Depends(get_session),
 ):
     """Get list of product types."""
-    return await crud_product_type.get_multi_with_filters(db=session, filter_obj=filters)
+    return await crud_product_type.get_multi_with_filters(
+        db=session, filter_obj=filters
+    )
 
 
 @router.get("/product-types/{product_type_id}", response_model=productTypeLookup)
@@ -77,3 +88,37 @@ async def create_product_type(
     """Create a new product type."""
     return await crud_product_type.create(db=session, obj_in=product_type)
 
+
+@router.get("/ticker-sources/", response_model=List[tickerSourceLookup])
+async def get_ticker_sources(
+    filters: tickerSourceFilter = FilterDepends(tickerSourceFilter),
+    session: AsyncSession = Depends(get_session),
+):
+    """Get list of ticker sources."""
+    return await crud_ticker_source.get_multi_with_filters(
+        db=session, filter_obj=filters
+    )
+
+
+@router.get("/ticker-sources/{ticker_source_id}", response_model=tickerSourceLookup)
+async def get_ticker_source_by_id(
+    ticker_source_id: int,
+    session: AsyncSession = Depends(get_session),
+):
+    """Get a specific ticker source by ID."""
+    ticker_source = await crud_ticker_source.get_by_id(
+        db=session,
+        ticker_source_id=ticker_source_id,
+    )
+    if not ticker_source:
+        raise HTTPException(status_code=404, detail="Ticker source not found")
+    return ticker_source
+
+
+@router.post("/ticker-sources/", response_model=tickerSourceLookup, status_code=201)
+async def create_ticker_source(
+    ticker_source: tickerSourceLookup,
+    session: AsyncSession = Depends(get_session),
+):
+    """Create a new ticker source."""
+    return await crud_ticker_source.create(db=session, obj_in=ticker_source)

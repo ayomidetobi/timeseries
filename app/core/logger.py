@@ -1,4 +1,5 @@
 """Global logger configuration using loguru."""
+
 import sys
 from loguru import logger as loguru_logger
 
@@ -9,7 +10,7 @@ def configure_logger():
     """Configure loguru logger with application settings."""
     # Remove default handler
     loguru_logger.remove()
-    
+
     # Add custom handler
     loguru_logger.add(
         sys.stderr,
@@ -22,10 +23,9 @@ def configure_logger():
         level=settings.log_level,
         colorize=True,
     )
-    
+
     return loguru_logger
 
 
 # Configure logger when module is imported
 logger = configure_logger()
-

@@ -1,4 +1,5 @@
 """Base CRUD operations."""
+
 from typing import Any, Generic, Optional, TypeVar, Type
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,10 +21,14 @@ class crudBase(Generic[ModelType]):
         """
         self.model = model
 
-    async def get(self, db: AsyncSession, id: Any, id_field: str = "id") -> Optional[ModelType]:
+    async def get(
+        self, db: AsyncSession, id: Any, id_field: str = "id"
+    ) -> Optional[ModelType]:
         """Get a single record by ID."""
         if not hasattr(self.model, id_field):
-            raise ValueError(f"Model {self.model.__name__} does not have field {id_field}")
+            raise ValueError(
+                f"Model {self.model.__name__} does not have field {id_field}"
+            )
         query = select(self.model).where(getattr(self.model, id_field) == id)
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -51,7 +56,7 @@ class crudBase(Generic[ModelType]):
             db_obj = self.model(**obj_in)
         else:
             db_obj = obj_in
-        
+
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
@@ -69,24 +74,25 @@ class crudBase(Generic[ModelType]):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_unset=True)
-        
+
         for field, value in update_data.items():
             setattr(db_obj, field, value)
-        
+
         # Update updated_at timestamp if field exists
         if hasattr(db_obj, "updated_at"):
             db_obj.updated_at = datetime.utcnow()
-        
+
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
 
-    async def delete(self, db: AsyncSession, *, id: Any, id_field: str = "id") -> Optional[ModelType]:
+    async def delete(
+        self, db: AsyncSession, *, id: Any, id_field: str = "id"
+    ) -> Optional[ModelType]:
         """Delete a record by ID."""
         obj = await self.get(db, id, id_field=id_field)
         if obj:
             await db.delete(obj)
             await db.commit()
         return obj
-

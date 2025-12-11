@@ -1,4 +1,5 @@
 """Constants package for shared enums and mappings."""
+
 from app.constants.lookup_enums import (
     assetClassEnum,
     subAssetClassEnum,
@@ -26,4 +27,3 @@ __all__ = [
     "FX_MARKET_SUB_ASSET_MAP",
     "ASSET_CLASS_SUB_ASSET_MAP",
 ]
-

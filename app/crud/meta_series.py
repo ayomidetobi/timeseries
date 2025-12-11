@@ -1,4 +1,5 @@
 """CRUD operations for MetaSeries."""
+
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -30,11 +31,11 @@ class crudMetaSeries(crudBase[metaSeries]):
     ) -> list[metaSeries]:
         """Get multiple meta series with filters."""
         query = select(metaSeries)
-        
+
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
         query = filter_obj.sort(query)
-        
+
         result = await db.execute(query)
         return list(result.scalars().all())
 

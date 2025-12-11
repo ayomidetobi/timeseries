@@ -1,4 +1,5 @@
 """System endpoints (root, health check)."""
+
 from fastapi import APIRouter, HTTPException
 
 from app.core.database import db_health_check
@@ -12,11 +13,7 @@ router = APIRouter()
 @router.get("/", response_model=rootResponse)
 async def root():
     """Root endpoint."""
-    return rootResponse(
-        message="Financial Data API",
-        version="1.0.0",
-        docs="/docs"
-    )
+    return rootResponse(message="Financial Data API", version="1.0.0", docs="/docs")
 
 
 @router.get("/health", response_model=healthStatusResponse)
@@ -26,23 +23,18 @@ async def health_check():
         "status": "healthy",
         "database": "connected",
         "redis": "unknown",
-        "clickhouse": "unknown"
+        "clickhouse": "unknown",
     }
-    
+
     # Check database
     try:
         await db_health_check(timeout=5.0)
     except Exception as e:
         error_detail = healthErrorResponse(
-            status="unhealthy",
-            database="disconnected",
-            error=str(e)
+            status="unhealthy", database="disconnected", error=str(e)
         )
-        raise HTTPException(
-            status_code=503,
-            detail=error_detail.model_dump()
-        )
-    
+        raise HTTPException(status_code=503, detail=error_detail.model_dump())
+
     # Check Redis (optional)
     try:
         await redis_health_check(timeout=2.0)
@@ -54,7 +46,7 @@ async def health_check():
         # Redis is configured but not responding
         health_status["redis"] = "disconnected"
         # Don't fail the health check for Redis issues
-    
+
     # Check ClickHouse (optional)
     try:
         await clickhouse_health_check(timeout=2.0)
@@ -66,6 +58,5 @@ async def health_check():
         # ClickHouse is configured but not responding
         health_status["clickhouse"] = "disconnected"
         # Don't fail the health check for ClickHouse issues
-    
-    return healthStatusResponse(**health_status)
 
+    return healthStatusResponse(**health_status)

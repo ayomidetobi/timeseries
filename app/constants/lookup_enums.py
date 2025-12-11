@@ -1,9 +1,11 @@
 """Constants and enums for lookup tables and financial data generation."""
+
 from enum import Enum
 
 
 class assetClassEnum(str, Enum):
     """Enum for asset classes."""
+
     COMMODITY = "Commodity"
     CREDIT = "Credit"
     FX = "FX"
@@ -11,6 +13,7 @@ class assetClassEnum(str, Enum):
 
 class subAssetClassEnum(str, Enum):
     """Enum for sub-asset classes."""
+
     BASE_METALS = "Base Metals"
     ENERGY = "Energy"
     PRECIOUS_METALS = "Precious Metals"
@@ -23,17 +26,20 @@ class subAssetClassEnum(str, Enum):
 
 class productTypeEnum(str, Enum):
     """Enum for product types."""
+
     SPOT = "Spot"
     INDEX = "Index"
 
 
 class structureTypeEnum(str, Enum):
     """Enum for structure types."""
+
     OUTRIGHT = "Outright"
 
 
 class marketSegmentEnum(str, Enum):
     """Enum for market segments."""
+
     GLOBAL = "Global"
     DM = "DM"
     EM = "EM"
@@ -41,6 +47,7 @@ class marketSegmentEnum(str, Enum):
 
 class dataTypeEnum(str, Enum):
     """Enum for data types."""
+
     PRICE = "Price"
     OPEN_INTEREST = "Open Interest"
     PRICE_SPREAD = "Price Spread"
@@ -48,12 +55,31 @@ class dataTypeEnum(str, Enum):
 
 class fieldTypeEnum(str, Enum):
     """Enum for field types (FLDS)."""
+
     PX_LAST = "PX_LAST"
     OPEN_INT = "OPEN_INT"
     PX_OPEN = "PX_OPEN"
     PX_HIGH = "PX_HIGH"
     PX_LOW = "PX_LOW"
     PX_VOLUME = "PX_VOLUME"
+
+
+class tickerSourceEnum(str, Enum):
+    """Enum for ticker source types."""
+
+    BLOOMBERG = "Bloomberg"
+    HAWKEYE = "Hawkeye"
+    RAMP = "RAMP"
+    LSEG = "LSEG"
+
+
+class tickerSourceCodeEnum(str, Enum):
+    """Enum for ticker source code types."""
+
+    BBG = "BBG"
+    HWK = "HWK"
+    RMP = "RMP"
+    LSE = "LSE"
 
 
 # Ticker suffix mapping based on asset class and product type
@@ -112,4 +138,3 @@ ASSET_CLASS_SUB_ASSET_MAP = {
         subAssetClassEnum.G10,
     ],
 }
-

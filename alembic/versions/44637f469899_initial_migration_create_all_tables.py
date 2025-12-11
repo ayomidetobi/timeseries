@@ -1,17 +1,18 @@
 """initial_migration_create_all_tables
 
 Revision ID: 44637f469899
-Revises: 
+Revises:
 Create Date: 2025-12-08 18:56:17.023061
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 import sqlmodel
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '44637f469899'
+revision = "44637f469899"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -35,7 +36,7 @@ def upgrade() -> None:
             
         END $$;
     """)
-    
+
     # Create field_type enum if it doesn't exist (before table creation so SQLAlchemy can use it)
     op.execute("""
         DO $$ 
@@ -45,201 +46,544 @@ def upgrade() -> None:
             END IF;
         END $$;
     """)
-    
-    op.create_table('asset_class_lookup',
-    sa.Column('asset_class_id', sa.Integer(), nullable=False),
-    sa.Column('asset_class_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('asset_class_id')
+
+    op.create_table(
+        "asset_class_lookup",
+        sa.Column("asset_class_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "asset_class_name",
+            sqlmodel.sql.sqltypes.AutoString(length=255),
+            nullable=False,
+        ),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("asset_class_id"),
     )
-    op.create_index(op.f('ix_asset_class_lookup_asset_class_name'), 'asset_class_lookup', ['asset_class_name'], unique=True)
-    op.create_index('ix_asset_class_lookup_name', 'asset_class_lookup', ['asset_class_name'], unique=False)
-    op.create_table('product_type_lookup',
-    sa.Column('product_type_id', sa.Integer(), nullable=False),
-    sa.Column('product_type_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('is_derived', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('product_type_id')
+    op.create_index(
+        op.f("ix_asset_class_lookup_asset_class_name"),
+        "asset_class_lookup",
+        ["asset_class_name"],
+        unique=True,
     )
-    op.create_index(op.f('ix_product_type_lookup_product_type_name'), 'product_type_lookup', ['product_type_name'], unique=True)
-    op.create_index('ix_product_type_lookup_name', 'product_type_lookup', ['product_type_name'], unique=False)
-    op.create_table('sub_asset_class_lookup',
-    sa.Column('sub_asset_class_id', sa.Integer(), nullable=False),
-    sa.Column('sub_asset_class_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('asset_class_id', sa.Integer(), nullable=True),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['asset_class_id'], ['asset_class_lookup.asset_class_id'], ),
-    sa.PrimaryKeyConstraint('sub_asset_class_id')
+    op.create_index(
+        "ix_asset_class_lookup_name",
+        "asset_class_lookup",
+        ["asset_class_name"],
+        unique=False,
     )
-    op.create_index('ix_sub_asset_class_lookup_asset_class', 'sub_asset_class_lookup', ['asset_class_id'], unique=False)
-    op.create_index(op.f('ix_sub_asset_class_lookup_asset_class_id'), 'sub_asset_class_lookup', ['asset_class_id'], unique=False)
-    op.create_index('ix_sub_asset_class_lookup_asset_class_name', 'sub_asset_class_lookup', ['asset_class_id', 'sub_asset_class_name'], unique=False)
-    op.create_index('ix_sub_asset_class_lookup_name', 'sub_asset_class_lookup', ['sub_asset_class_name'], unique=False)
-    op.create_index(op.f('ix_sub_asset_class_lookup_sub_asset_class_name'), 'sub_asset_class_lookup', ['sub_asset_class_name'], unique=False)
-    op.create_table('data_type_lookup',
-    sa.Column('data_type_id', sa.Integer(), nullable=False),
-    sa.Column('data_type_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('data_type_id')
+    op.create_table(
+        "product_type_lookup",
+        sa.Column("product_type_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "product_type_name",
+            sqlmodel.sql.sqltypes.AutoString(length=255),
+            nullable=False,
+        ),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("is_derived", sa.Boolean(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("product_type_id"),
     )
-    op.create_index(op.f('ix_data_type_lookup_data_type_name'), 'data_type_lookup', ['data_type_name'], unique=True)
-    op.create_index('ix_data_type_lookup_name', 'data_type_lookup', ['data_type_name'], unique=False)
-    op.create_table('structure_type_lookup',
-    sa.Column('structure_type_id', sa.Integer(), nullable=False),
-    sa.Column('structure_type_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('structure_type_id')
+    op.create_index(
+        op.f("ix_product_type_lookup_product_type_name"),
+        "product_type_lookup",
+        ["product_type_name"],
+        unique=True,
     )
-    op.create_index('ix_structure_type_lookup_name', 'structure_type_lookup', ['structure_type_name'], unique=False)
-    op.create_index(op.f('ix_structure_type_lookup_structure_type_name'), 'structure_type_lookup', ['structure_type_name'], unique=True)
-    op.create_table('market_segment_lookup',
-    sa.Column('market_segment_id', sa.Integer(), nullable=False),
-    sa.Column('market_segment_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('market_segment_id')
+    op.create_index(
+        "ix_product_type_lookup_name",
+        "product_type_lookup",
+        ["product_type_name"],
+        unique=False,
     )
-    op.create_index(op.f('ix_market_segment_lookup_market_segment_name'), 'market_segment_lookup', ['market_segment_name'], unique=True)
-    op.create_index('ix_market_segment_lookup_name', 'market_segment_lookup', ['market_segment_name'], unique=False)
-    op.create_table('field_type_lookup',
-    sa.Column('field_type_id', sa.Integer(), nullable=False),
-    sa.Column('field_type_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('description', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.PrimaryKeyConstraint('field_type_id')
+    op.create_table(
+        "sub_asset_class_lookup",
+        sa.Column("sub_asset_class_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "sub_asset_class_name",
+            sqlmodel.sql.sqltypes.AutoString(length=255),
+            nullable=False,
+        ),
+        sa.Column("asset_class_id", sa.Integer(), nullable=True),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["asset_class_id"],
+            ["asset_class_lookup.asset_class_id"],
+        ),
+        sa.PrimaryKeyConstraint("sub_asset_class_id"),
     )
-    op.create_index(op.f('ix_field_type_lookup_field_type_name'), 'field_type_lookup', ['field_type_name'], unique=True)
-    op.create_index('ix_field_type_lookup_name', 'field_type_lookup', ['field_type_name'], unique=False)
-    op.create_table('meta_series',
-    sa.Column('series_id', sa.Integer(), nullable=False),
-    sa.Column('series_name', sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False),
-    sa.Column('asset_class_id', sa.Integer(), nullable=True),
-    sa.Column('sub_asset_class_id', sa.Integer(), nullable=True),
-    sa.Column('product_type_id', sa.Integer(), nullable=True),
-    sa.Column('data_type_id', sa.Integer(), nullable=True),
-    sa.Column('structure_type_id', sa.Integer(), nullable=True),
-    sa.Column('market_segment_id', sa.Integer(), nullable=True),
-    sa.Column('ticker', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True),
-    sa.Column('flds_id', sa.Integer(), nullable=True),
-    sa.Column('valid_from', sa.DateTime(), nullable=True),
-    sa.Column('valid_to', sa.DateTime(), nullable=True),
-    sa.Column('version_number', sa.Integer(), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('is_derived', sa.Boolean(), nullable=False),
-    sa.Column('calculation_method', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True),
-    sa.Column('data_quality_score', sa.Numeric(precision=3, scale=2), nullable=True),
-    sa.Column('source', sa.Enum('RAW', 'DERIVED', name='data_source', create_constraint=True), nullable=True),
-    sa.Column('confidence_level', sqlmodel.sql.sqltypes.AutoString(length=20), nullable=True),
-    sa.Column('effective_date', sa.DateTime(), nullable=True),
-    sa.Column('as_of_date', sa.DateTime(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['asset_class_id'], ['asset_class_lookup.asset_class_id'], ),
-    sa.ForeignKeyConstraint(['sub_asset_class_id'], ['sub_asset_class_lookup.sub_asset_class_id'], ),
-    sa.ForeignKeyConstraint(['product_type_id'], ['product_type_lookup.product_type_id'], ),
-    sa.ForeignKeyConstraint(['data_type_id'], ['data_type_lookup.data_type_id'], ),
-    sa.ForeignKeyConstraint(['structure_type_id'], ['structure_type_lookup.structure_type_id'], ),
-    sa.ForeignKeyConstraint(['market_segment_id'], ['market_segment_lookup.market_segment_id'], ),
-    sa.ForeignKeyConstraint(['flds_id'], ['field_type_lookup.field_type_id'], ),
-    sa.PrimaryKeyConstraint('series_id')
+    op.create_index(
+        "ix_sub_asset_class_lookup_asset_class",
+        "sub_asset_class_lookup",
+        ["asset_class_id"],
+        unique=False,
     )
-    op.create_index(op.f('ix_meta_series_asset_class_id'), 'meta_series', ['asset_class_id'], unique=False)
-    op.create_index('ix_meta_series_asset_class_product_type', 'meta_series', ['asset_class_id', 'product_type_id'], unique=False)
-    op.create_index(op.f('ix_meta_series_data_type_id'), 'meta_series', ['data_type_id'], unique=False)
-    op.create_index(op.f('ix_meta_series_is_active'), 'meta_series', ['is_active'], unique=False)
-    op.create_index('ix_meta_series_is_active_asset_class', 'meta_series', ['is_active', 'asset_class_id'], unique=False)
-    op.create_index('ix_meta_series_is_active_product_type', 'meta_series', ['is_active', 'product_type_id'], unique=False)
-    op.create_index(op.f('ix_meta_series_is_derived'), 'meta_series', ['is_derived'], unique=False)
-    op.create_index(op.f('ix_meta_series_market_segment_id'), 'meta_series', ['market_segment_id'], unique=False)
-    op.create_index(op.f('ix_meta_series_product_type_id'), 'meta_series', ['product_type_id'], unique=False)
-    op.create_index(op.f('ix_meta_series_series_name'), 'meta_series', ['series_name'], unique=False)
-    op.create_index('ix_meta_series_source', 'meta_series', ['source'], unique=False)
-    op.create_index(op.f('ix_meta_series_structure_type_id'), 'meta_series', ['structure_type_id'], unique=False)
-    op.create_index(op.f('ix_meta_series_sub_asset_class_id'), 'meta_series', ['sub_asset_class_id'], unique=False)
-    op.create_index(op.f('ix_meta_series_ticker'), 'meta_series', ['ticker'], unique=False)
-    op.create_index(op.f('ix_meta_series_flds_id'), 'meta_series', ['flds_id'], unique=False)
-    op.create_table('calculation_log',
-    sa.Column('calculation_id', sa.Integer(), nullable=False),
-    sa.Column('derived_series_id', sa.Integer(), nullable=False),
-    sa.Column('calculation_method', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True),
-    sa.Column('input_series_ids', postgresql.ARRAY(sa.Integer()), nullable=True),
-    sa.Column('calculation_parameters', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('calculation_status', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
-    sa.Column('error_message', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('execution_time_ms', sa.Integer(), nullable=True),
-    sa.Column('calculated_at', sa.DateTime(), nullable=True),
-    sa.Column('last_calculated', sa.DateTime(), nullable=True),
-    sa.Column('calculated_by', sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True),
-    sa.Column('calculation_policy', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
-    sa.ForeignKeyConstraint(['derived_series_id'], ['meta_series.series_id'], ),
-    sa.PrimaryKeyConstraint('calculation_id')
+    op.create_index(
+        op.f("ix_sub_asset_class_lookup_asset_class_id"),
+        "sub_asset_class_lookup",
+        ["asset_class_id"],
+        unique=False,
     )
-    op.create_index(op.f('ix_calculation_log_calculated_at'), 'calculation_log', ['calculated_at'], unique=False)
-    op.create_index(op.f('ix_calculation_log_calculation_method'), 'calculation_log', ['calculation_method'], unique=False)
-    op.create_index(op.f('ix_calculation_log_calculation_status'), 'calculation_log', ['calculation_status'], unique=False)
-    op.create_index(op.f('ix_calculation_log_derived_series_id'), 'calculation_log', ['derived_series_id'], unique=False)
-    op.create_index('ix_calculation_series_method', 'calculation_log', ['derived_series_id', 'calculation_method'], unique=False)
-    op.create_index('ix_calculation_series_status', 'calculation_log', ['derived_series_id', 'calculation_status'], unique=False)
-    op.create_index('ix_calculation_status_method', 'calculation_log', ['calculation_status', 'calculation_method'], unique=False)
-    op.create_table('series_dependency_graph',
-    sa.Column('dependency_id', sa.Integer(), nullable=False),
-    sa.Column('parent_series_id', sa.Integer(), nullable=False),
-    sa.Column('child_series_id', sa.Integer(), nullable=False),
-    sa.Column('dependency_type', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
-    sa.Column('weight', sa.Numeric(precision=3, scale=2), nullable=True),
-    sa.Column('formula', sqlmodel.sql.sqltypes.AutoString(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('valid_from', sa.DateTime(), nullable=True),
-    sa.Column('valid_to', sa.DateTime(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['child_series_id'], ['meta_series.series_id'], ),
-    sa.ForeignKeyConstraint(['parent_series_id'], ['meta_series.series_id'], ),
-    sa.PrimaryKeyConstraint('dependency_id')
+    op.create_index(
+        "ix_sub_asset_class_lookup_asset_class_name",
+        "sub_asset_class_lookup",
+        ["asset_class_id", "sub_asset_class_name"],
+        unique=False,
     )
-    op.create_index('ix_dependency_child_is_active', 'series_dependency_graph', ['child_series_id', 'is_active'], unique=False)
-    op.create_index('ix_dependency_parent_is_active', 'series_dependency_graph', ['parent_series_id', 'is_active'], unique=False)
-    op.create_index(op.f('ix_series_dependency_graph_child_series_id'), 'series_dependency_graph', ['child_series_id'], unique=False)
-    op.create_index(op.f('ix_series_dependency_graph_dependency_type'), 'series_dependency_graph', ['dependency_type'], unique=False)
-    op.create_index(op.f('ix_series_dependency_graph_is_active'), 'series_dependency_graph', ['is_active'], unique=False)
-    op.create_index(op.f('ix_series_dependency_graph_parent_series_id'), 'series_dependency_graph', ['parent_series_id'], unique=False)
-    op.create_table('value_data',
-    sa.Column('id', sa.Integer(), nullable=True, autoincrement=True),
-    sa.Column('time', sa.DateTime(timezone=True), nullable=True),
-    sa.Column('series_id', sa.Integer(), nullable=False),
-    sa.Column('timestamp', sa.Date(), nullable=False),
-    sa.Column('value', sa.Numeric(precision=20, scale=8), nullable=True),
-    sa.Column('dependency_calculation_id', sa.Integer(), nullable=True),
-    sa.Column('derived_flag', sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True),
-    sa.Column('version_number', sa.Integer(), nullable=False),
-    sa.Column('is_latest', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['dependency_calculation_id'], ['calculation_log.calculation_id'], ),
-    sa.ForeignKeyConstraint(['series_id'], ['meta_series.series_id'], ),
-    sa.PrimaryKeyConstraint('series_id', 'timestamp')
+    op.create_index(
+        "ix_sub_asset_class_lookup_name",
+        "sub_asset_class_lookup",
+        ["sub_asset_class_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_sub_asset_class_lookup_sub_asset_class_name"),
+        "sub_asset_class_lookup",
+        ["sub_asset_class_name"],
+        unique=False,
+    )
+    op.create_table(
+        "data_type_lookup",
+        sa.Column("data_type_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "data_type_name",
+            sqlmodel.sql.sqltypes.AutoString(length=255),
+            nullable=False,
+        ),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("data_type_id"),
+    )
+    op.create_index(
+        op.f("ix_data_type_lookup_data_type_name"),
+        "data_type_lookup",
+        ["data_type_name"],
+        unique=True,
+    )
+    op.create_index(
+        "ix_data_type_lookup_name", "data_type_lookup", ["data_type_name"], unique=False
+    )
+    op.create_table(
+        "structure_type_lookup",
+        sa.Column("structure_type_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "structure_type_name",
+            sqlmodel.sql.sqltypes.AutoString(length=255),
+            nullable=False,
+        ),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("structure_type_id"),
+    )
+    op.create_index(
+        "ix_structure_type_lookup_name",
+        "structure_type_lookup",
+        ["structure_type_name"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_structure_type_lookup_structure_type_name"),
+        "structure_type_lookup",
+        ["structure_type_name"],
+        unique=True,
+    )
+    op.create_table(
+        "market_segment_lookup",
+        sa.Column("market_segment_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "market_segment_name",
+            sqlmodel.sql.sqltypes.AutoString(length=255),
+            nullable=False,
+        ),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("market_segment_id"),
+    )
+    op.create_index(
+        op.f("ix_market_segment_lookup_market_segment_name"),
+        "market_segment_lookup",
+        ["market_segment_name"],
+        unique=True,
+    )
+    op.create_index(
+        "ix_market_segment_lookup_name",
+        "market_segment_lookup",
+        ["market_segment_name"],
+        unique=False,
+    )
+    op.create_table(
+        "field_type_lookup",
+        sa.Column("field_type_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "field_type_name",
+            sqlmodel.sql.sqltypes.AutoString(length=255),
+            nullable=False,
+        ),
+        sa.Column("description", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("field_type_id"),
+    )
+    op.create_index(
+        op.f("ix_field_type_lookup_field_type_name"),
+        "field_type_lookup",
+        ["field_type_name"],
+        unique=True,
+    )
+    op.create_index(
+        "ix_field_type_lookup_name",
+        "field_type_lookup",
+        ["field_type_name"],
+        unique=False,
+    )
+    op.create_table(
+        "meta_series",
+        sa.Column("series_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "series_name", sqlmodel.sql.sqltypes.AutoString(length=255), nullable=False
+        ),
+        sa.Column("asset_class_id", sa.Integer(), nullable=True),
+        sa.Column("sub_asset_class_id", sa.Integer(), nullable=True),
+        sa.Column("product_type_id", sa.Integer(), nullable=True),
+        sa.Column("data_type_id", sa.Integer(), nullable=True),
+        sa.Column("structure_type_id", sa.Integer(), nullable=True),
+        sa.Column("market_segment_id", sa.Integer(), nullable=True),
+        sa.Column(
+            "ticker", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True
+        ),
+        sa.Column("flds_id", sa.Integer(), nullable=True),
+        sa.Column("valid_from", sa.DateTime(), nullable=True),
+        sa.Column("valid_to", sa.DateTime(), nullable=True),
+        sa.Column("version_number", sa.Integer(), nullable=False),
+        sa.Column("is_active", sa.Boolean(), nullable=False),
+        sa.Column("is_derived", sa.Boolean(), nullable=False),
+        sa.Column(
+            "calculation_method",
+            sqlmodel.sql.sqltypes.AutoString(length=100),
+            nullable=True,
+        ),
+        sa.Column(
+            "data_quality_score", sa.Numeric(precision=3, scale=2), nullable=True
+        ),
+        sa.Column(
+            "source",
+            sa.Enum("RAW", "DERIVED", name="data_source", create_constraint=True),
+            nullable=True,
+        ),
+        sa.Column(
+            "confidence_level",
+            sqlmodel.sql.sqltypes.AutoString(length=20),
+            nullable=True,
+        ),
+        sa.Column("effective_date", sa.DateTime(), nullable=True),
+        sa.Column("as_of_date", sa.DateTime(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["asset_class_id"],
+            ["asset_class_lookup.asset_class_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["sub_asset_class_id"],
+            ["sub_asset_class_lookup.sub_asset_class_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["product_type_id"],
+            ["product_type_lookup.product_type_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["data_type_id"],
+            ["data_type_lookup.data_type_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["structure_type_id"],
+            ["structure_type_lookup.structure_type_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["market_segment_id"],
+            ["market_segment_lookup.market_segment_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["flds_id"],
+            ["field_type_lookup.field_type_id"],
+        ),
+        sa.PrimaryKeyConstraint("series_id"),
+    )
+    op.create_index(
+        op.f("ix_meta_series_asset_class_id"),
+        "meta_series",
+        ["asset_class_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_meta_series_asset_class_product_type",
+        "meta_series",
+        ["asset_class_id", "product_type_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_meta_series_data_type_id"),
+        "meta_series",
+        ["data_type_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_meta_series_is_active"), "meta_series", ["is_active"], unique=False
+    )
+    op.create_index(
+        "ix_meta_series_is_active_asset_class",
+        "meta_series",
+        ["is_active", "asset_class_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_meta_series_is_active_product_type",
+        "meta_series",
+        ["is_active", "product_type_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_meta_series_is_derived"), "meta_series", ["is_derived"], unique=False
+    )
+    op.create_index(
+        op.f("ix_meta_series_market_segment_id"),
+        "meta_series",
+        ["market_segment_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_meta_series_product_type_id"),
+        "meta_series",
+        ["product_type_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_meta_series_series_name"), "meta_series", ["series_name"], unique=False
+    )
+    op.create_index("ix_meta_series_source", "meta_series", ["source"], unique=False)
+    op.create_index(
+        op.f("ix_meta_series_structure_type_id"),
+        "meta_series",
+        ["structure_type_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_meta_series_sub_asset_class_id"),
+        "meta_series",
+        ["sub_asset_class_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_meta_series_ticker"), "meta_series", ["ticker"], unique=False
+    )
+    op.create_index(
+        op.f("ix_meta_series_flds_id"), "meta_series", ["flds_id"], unique=False
+    )
+    op.create_table(
+        "calculation_log",
+        sa.Column("calculation_id", sa.Integer(), nullable=False),
+        sa.Column("derived_series_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "calculation_method",
+            sqlmodel.sql.sqltypes.AutoString(length=100),
+            nullable=True,
+        ),
+        sa.Column("input_series_ids", postgresql.ARRAY(sa.Integer()), nullable=True),
+        sa.Column(
+            "calculation_parameters",
+            postgresql.JSONB(astext_type=sa.Text()),
+            nullable=True,
+        ),
+        sa.Column(
+            "calculation_status",
+            sqlmodel.sql.sqltypes.AutoString(length=50),
+            nullable=True,
+        ),
+        sa.Column("error_message", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("execution_time_ms", sa.Integer(), nullable=True),
+        sa.Column("calculated_at", sa.DateTime(), nullable=True),
+        sa.Column("last_calculated", sa.DateTime(), nullable=True),
+        sa.Column(
+            "calculated_by", sqlmodel.sql.sqltypes.AutoString(length=100), nullable=True
+        ),
+        sa.Column(
+            "calculation_policy",
+            sqlmodel.sql.sqltypes.AutoString(length=50),
+            nullable=True,
+        ),
+        sa.ForeignKeyConstraint(
+            ["derived_series_id"],
+            ["meta_series.series_id"],
+        ),
+        sa.PrimaryKeyConstraint("calculation_id"),
+    )
+    op.create_index(
+        op.f("ix_calculation_log_calculated_at"),
+        "calculation_log",
+        ["calculated_at"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_calculation_log_calculation_method"),
+        "calculation_log",
+        ["calculation_method"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_calculation_log_calculation_status"),
+        "calculation_log",
+        ["calculation_status"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_calculation_log_derived_series_id"),
+        "calculation_log",
+        ["derived_series_id"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_calculation_series_method",
+        "calculation_log",
+        ["derived_series_id", "calculation_method"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_calculation_series_status",
+        "calculation_log",
+        ["derived_series_id", "calculation_status"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_calculation_status_method",
+        "calculation_log",
+        ["calculation_status", "calculation_method"],
+        unique=False,
+    )
+    op.create_table(
+        "series_dependency_graph",
+        sa.Column("dependency_id", sa.Integer(), nullable=False),
+        sa.Column("parent_series_id", sa.Integer(), nullable=False),
+        sa.Column("child_series_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "dependency_type",
+            sqlmodel.sql.sqltypes.AutoString(length=50),
+            nullable=True,
+        ),
+        sa.Column("weight", sa.Numeric(precision=3, scale=2), nullable=True),
+        sa.Column("formula", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("is_active", sa.Boolean(), nullable=False),
+        sa.Column("valid_from", sa.DateTime(), nullable=True),
+        sa.Column("valid_to", sa.DateTime(), nullable=True),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["child_series_id"],
+            ["meta_series.series_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["parent_series_id"],
+            ["meta_series.series_id"],
+        ),
+        sa.PrimaryKeyConstraint("dependency_id"),
+    )
+    op.create_index(
+        "ix_dependency_child_is_active",
+        "series_dependency_graph",
+        ["child_series_id", "is_active"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_dependency_parent_is_active",
+        "series_dependency_graph",
+        ["parent_series_id", "is_active"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_series_dependency_graph_child_series_id"),
+        "series_dependency_graph",
+        ["child_series_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_series_dependency_graph_dependency_type"),
+        "series_dependency_graph",
+        ["dependency_type"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_series_dependency_graph_is_active"),
+        "series_dependency_graph",
+        ["is_active"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_series_dependency_graph_parent_series_id"),
+        "series_dependency_graph",
+        ["parent_series_id"],
+        unique=False,
+    )
+    op.create_table(
+        "value_data",
+        sa.Column("id", sa.Integer(), nullable=True, autoincrement=True),
+        sa.Column("time", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("series_id", sa.Integer(), nullable=False),
+        sa.Column("timestamp", sa.Date(), nullable=False),
+        sa.Column("value", sa.Numeric(precision=20, scale=8), nullable=True),
+        sa.Column("dependency_calculation_id", sa.Integer(), nullable=True),
+        sa.Column(
+            "derived_flag", sqlmodel.sql.sqltypes.AutoString(length=50), nullable=True
+        ),
+        sa.Column("version_number", sa.Integer(), nullable=False),
+        sa.Column("is_latest", sa.Boolean(), nullable=False),
+        sa.Column("created_at", sa.DateTime(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["dependency_calculation_id"],
+            ["calculation_log.calculation_id"],
+        ),
+        sa.ForeignKeyConstraint(
+            ["series_id"],
+            ["meta_series.series_id"],
+        ),
+        sa.PrimaryKeyConstraint("series_id", "timestamp"),
     )
     # Create sequence for id column
     op.execute("CREATE SEQUENCE IF NOT EXISTS value_data_id_seq;")
-    op.execute("ALTER TABLE value_data ALTER COLUMN id SET DEFAULT nextval('value_data_id_seq');")
+    op.execute(
+        "ALTER TABLE value_data ALTER COLUMN id SET DEFAULT nextval('value_data_id_seq');"
+    )
     op.execute("ALTER SEQUENCE value_data_id_seq OWNED BY value_data.id;")
-    op.create_index(op.f('ix_value_data_dependency_calculation_id'), 'value_data', ['dependency_calculation_id'], unique=False)
-    op.create_index(op.f('ix_value_data_is_latest'), 'value_data', ['is_latest'], unique=False)
-    op.create_index('ix_value_data_series_date', 'value_data', ['series_id', 'timestamp'], unique=False)
-    op.create_index('ix_value_data_series_is_latest', 'value_data', ['series_id', 'is_latest'], unique=False)
-    op.create_index(op.f('ix_value_data_timestamp'), 'value_data', ['timestamp'], unique=False)
-    
+    op.create_index(
+        op.f("ix_value_data_dependency_calculation_id"),
+        "value_data",
+        ["dependency_calculation_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_value_data_is_latest"), "value_data", ["is_latest"], unique=False
+    )
+    op.create_index(
+        "ix_value_data_series_date",
+        "value_data",
+        ["series_id", "timestamp"],
+        unique=False,
+    )
+    op.create_index(
+        "ix_value_data_series_is_latest",
+        "value_data",
+        ["series_id", "is_latest"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_value_data_timestamp"), "value_data", ["timestamp"], unique=False
+    )
+
     # Convert value_data to TimescaleDB hypertable
     # timestamp acts as the time column (via __time_column__ = "timestamp" in model)
     op.execute("""
@@ -248,7 +592,7 @@ def upgrade() -> None:
             if_not_exists => TRUE
         );
     """)
-    
+
     # Enable compression on value_data hypertable
     op.execute("""
         ALTER TABLE value_data SET (
@@ -264,7 +608,7 @@ def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
     # Drop sequence
     op.execute("DROP SEQUENCE IF EXISTS value_data_id_seq;")
-    
+
     # Drop TimescaleDB hypertable (this will also drop the table and all indexes)
     op.execute("""
         DO $$
@@ -279,60 +623,106 @@ def downgrade() -> None:
             END IF;
         END $$;
     """)
-    op.drop_index(op.f('ix_series_dependency_graph_parent_series_id'), table_name='series_dependency_graph')
-    op.drop_index(op.f('ix_series_dependency_graph_is_active'), table_name='series_dependency_graph')
-    op.drop_index(op.f('ix_series_dependency_graph_dependency_type'), table_name='series_dependency_graph')
-    op.drop_index(op.f('ix_series_dependency_graph_child_series_id'), table_name='series_dependency_graph')
-    op.drop_index('ix_dependency_parent_is_active', table_name='series_dependency_graph')
-    op.drop_index('ix_dependency_child_is_active', table_name='series_dependency_graph')
-    op.drop_table('series_dependency_graph')
-    op.drop_index('ix_calculation_status_method', table_name='calculation_log')
-    op.drop_index('ix_calculation_series_status', table_name='calculation_log')
-    op.drop_index('ix_calculation_series_method', table_name='calculation_log')
-    op.drop_index(op.f('ix_calculation_log_derived_series_id'), table_name='calculation_log')
-    op.drop_index(op.f('ix_calculation_log_calculation_status'), table_name='calculation_log')
-    op.drop_index(op.f('ix_calculation_log_calculation_method'), table_name='calculation_log')
-    op.drop_index(op.f('ix_calculation_log_calculated_at'), table_name='calculation_log')
-    op.drop_table('calculation_log')
-    op.drop_index(op.f('ix_meta_series_ticker'), table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_sub_asset_class_id'), table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_structure_type_id'), table_name='meta_series')
-    op.drop_index('ix_meta_series_source', table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_series_name'), table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_product_type_id'), table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_market_segment_id'), table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_is_derived'), table_name='meta_series')
-    op.drop_index('ix_meta_series_is_active_product_type', table_name='meta_series')
-    op.drop_index('ix_meta_series_is_active_asset_class', table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_is_active'), table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_data_type_id'), table_name='meta_series')
-    op.drop_index('ix_meta_series_asset_class_product_type', table_name='meta_series')
-    op.drop_index(op.f('ix_meta_series_asset_class_id'), table_name='meta_series')
-    op.drop_table('meta_series')
-    op.drop_index(op.f('ix_product_type_lookup_product_type_name'), table_name='product_type_lookup')
-    op.drop_index('ix_product_type_lookup_name', table_name='product_type_lookup')
-    op.drop_table('product_type_lookup')
-    op.drop_index(op.f('ix_market_segment_lookup_market_segment_name'), table_name='market_segment_lookup')
-    op.drop_index('ix_market_segment_lookup_name', table_name='market_segment_lookup')
-    op.drop_table('market_segment_lookup')
-    op.drop_index(op.f('ix_field_type_lookup_field_type_name'), table_name='field_type_lookup')
-    op.drop_index('ix_field_type_lookup_name', table_name='field_type_lookup')
-    op.drop_table('field_type_lookup')
-    op.drop_index(op.f('ix_structure_type_lookup_structure_type_name'), table_name='structure_type_lookup')
-    op.drop_index('ix_structure_type_lookup_name', table_name='structure_type_lookup')
-    op.drop_table('structure_type_lookup')
-    op.drop_index(op.f('ix_data_type_lookup_data_type_name'), table_name='data_type_lookup')
-    op.drop_index('ix_data_type_lookup_name', table_name='data_type_lookup')
-    op.drop_table('data_type_lookup')
-    op.drop_index(op.f('ix_sub_asset_class_lookup_sub_asset_class_name'), table_name='sub_asset_class_lookup')
-    op.drop_index('ix_sub_asset_class_lookup_name', table_name='sub_asset_class_lookup')
-    op.drop_index('ix_sub_asset_class_lookup_asset_class_name', table_name='sub_asset_class_lookup')
-    op.drop_index(op.f('ix_sub_asset_class_lookup_asset_class_id'), table_name='sub_asset_class_lookup')
-    op.drop_index('ix_sub_asset_class_lookup_asset_class', table_name='sub_asset_class_lookup')
-    op.drop_table('sub_asset_class_lookup')
-    op.drop_index(op.f('ix_asset_class_lookup_asset_class_name'), table_name='asset_class_lookup')
-    op.drop_index('ix_asset_class_lookup_name', table_name='asset_class_lookup')
-    op.drop_table('asset_class_lookup')
+    op.drop_index(
+        op.f("ix_series_dependency_graph_parent_series_id"),
+        table_name="series_dependency_graph",
+    )
+    op.drop_index(
+        op.f("ix_series_dependency_graph_is_active"),
+        table_name="series_dependency_graph",
+    )
+    op.drop_index(
+        op.f("ix_series_dependency_graph_dependency_type"),
+        table_name="series_dependency_graph",
+    )
+    op.drop_index(
+        op.f("ix_series_dependency_graph_child_series_id"),
+        table_name="series_dependency_graph",
+    )
+    op.drop_index(
+        "ix_dependency_parent_is_active", table_name="series_dependency_graph"
+    )
+    op.drop_index("ix_dependency_child_is_active", table_name="series_dependency_graph")
+    op.drop_table("series_dependency_graph")
+    op.drop_index("ix_calculation_status_method", table_name="calculation_log")
+    op.drop_index("ix_calculation_series_status", table_name="calculation_log")
+    op.drop_index("ix_calculation_series_method", table_name="calculation_log")
+    op.drop_index(
+        op.f("ix_calculation_log_derived_series_id"), table_name="calculation_log"
+    )
+    op.drop_index(
+        op.f("ix_calculation_log_calculation_status"), table_name="calculation_log"
+    )
+    op.drop_index(
+        op.f("ix_calculation_log_calculation_method"), table_name="calculation_log"
+    )
+    op.drop_index(
+        op.f("ix_calculation_log_calculated_at"), table_name="calculation_log"
+    )
+    op.drop_table("calculation_log")
+    op.drop_index(op.f("ix_meta_series_ticker"), table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_sub_asset_class_id"), table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_structure_type_id"), table_name="meta_series")
+    op.drop_index("ix_meta_series_source", table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_series_name"), table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_product_type_id"), table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_market_segment_id"), table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_is_derived"), table_name="meta_series")
+    op.drop_index("ix_meta_series_is_active_product_type", table_name="meta_series")
+    op.drop_index("ix_meta_series_is_active_asset_class", table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_is_active"), table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_data_type_id"), table_name="meta_series")
+    op.drop_index("ix_meta_series_asset_class_product_type", table_name="meta_series")
+    op.drop_index(op.f("ix_meta_series_asset_class_id"), table_name="meta_series")
+    op.drop_table("meta_series")
+    op.drop_index(
+        op.f("ix_product_type_lookup_product_type_name"),
+        table_name="product_type_lookup",
+    )
+    op.drop_index("ix_product_type_lookup_name", table_name="product_type_lookup")
+    op.drop_table("product_type_lookup")
+    op.drop_index(
+        op.f("ix_market_segment_lookup_market_segment_name"),
+        table_name="market_segment_lookup",
+    )
+    op.drop_index("ix_market_segment_lookup_name", table_name="market_segment_lookup")
+    op.drop_table("market_segment_lookup")
+    op.drop_index(
+        op.f("ix_field_type_lookup_field_type_name"), table_name="field_type_lookup"
+    )
+    op.drop_index("ix_field_type_lookup_name", table_name="field_type_lookup")
+    op.drop_table("field_type_lookup")
+    op.drop_index(
+        op.f("ix_structure_type_lookup_structure_type_name"),
+        table_name="structure_type_lookup",
+    )
+    op.drop_index("ix_structure_type_lookup_name", table_name="structure_type_lookup")
+    op.drop_table("structure_type_lookup")
+    op.drop_index(
+        op.f("ix_data_type_lookup_data_type_name"), table_name="data_type_lookup"
+    )
+    op.drop_index("ix_data_type_lookup_name", table_name="data_type_lookup")
+    op.drop_table("data_type_lookup")
+    op.drop_index(
+        op.f("ix_sub_asset_class_lookup_sub_asset_class_name"),
+        table_name="sub_asset_class_lookup",
+    )
+    op.drop_index("ix_sub_asset_class_lookup_name", table_name="sub_asset_class_lookup")
+    op.drop_index(
+        "ix_sub_asset_class_lookup_asset_class_name",
+        table_name="sub_asset_class_lookup",
+    )
+    op.drop_index(
+        op.f("ix_sub_asset_class_lookup_asset_class_id"),
+        table_name="sub_asset_class_lookup",
+    )
+    op.drop_index(
+        "ix_sub_asset_class_lookup_asset_class", table_name="sub_asset_class_lookup"
+    )
+    op.drop_table("sub_asset_class_lookup")
+    op.drop_index(
+        op.f("ix_asset_class_lookup_asset_class_name"), table_name="asset_class_lookup"
+    )
+    op.drop_index("ix_asset_class_lookup_name", table_name="asset_class_lookup")
+    op.drop_table("asset_class_lookup")
     # ### end Alembic commands ###
-
-

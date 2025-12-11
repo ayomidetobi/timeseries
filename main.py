@@ -4,12 +4,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.logger import logger  # Import configured logger (configures loguru globally)
-from app.core.database import init as init_db
+from app.core.logger import logger
+from app.core.database import init as init_db, get_session_context
 from app.core.redis_conn import init as init_redis, close as close_redis
-from app.core.clickhouse_conn import init as init_clickhouse, close as close_clickhouse, Base
+from app.core.clickhouse_conn import (
+    init as init_clickhouse,
+    close as close_clickhouse,
+    Base,
+)
 from app.core.clickhouse_conn import _clickhouse_connection_manager
 from app.api.v1.api import api_router
+from app.utils.dynamic_enums import initializeDynamicEnums
 
 
 @asynccontextmanager
@@ -20,6 +25,14 @@ async def lifespan(app: FastAPI):
     init_db()
     logger.success("Database initialized")
 
+    # Initialize dynamic enums from lookup tables
+    try:
+        async with get_session_context() as session:
+            await initializeDynamicEnums(session)
+        logger.success("Dynamic enums initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize dynamic enums (using fallback): {e}")
+
     # Initialize Redis if configured (optional)
     try:
         init_redis()
@@ -27,7 +40,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         # Redis is optional, so we continue if it fails to initialize
         logger.warning(f"Redis initialization failed (optional): {e}")
-    
+
     # Initialize ClickHouse if configured (optional)
     try:
         init_clickhouse()  # Initialize ClickHouse client & engine
@@ -41,8 +54,8 @@ async def lifespan(app: FastAPI):
         logger.warning(f"ClickHouse initialization failed (optional): {e}")
 
     logger.info("Application startup complete")
-    yield 
-    
+    yield
+
     # Shutdown
     logger.info("Shutting down application...")
     try:
@@ -77,5 +90,3 @@ app.add_middleware(
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
-
-

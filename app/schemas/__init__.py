@@ -1,4 +1,5 @@
 """Pydantic schemas for the application."""
+
 from app.schemas.filters import (
     metaSeriesFilter,
     valueDataFilter,
@@ -23,4 +24,3 @@ __all__ = [
     "healthStatusResponse",
     "healthErrorResponse",
 ]
-

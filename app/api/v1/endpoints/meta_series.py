@@ -1,4 +1,5 @@
 """Meta series endpoints."""
+
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_filter import FilterDepends
@@ -52,7 +53,9 @@ async def update_meta_series(
     series = await crud_meta_series.get_by_id(db=session, series_id=series_id)
     if not series:
         raise HTTPException(status_code=404, detail="Meta series not found")
-    return await crud_meta_series.update(db=session, db_obj=series, obj_in=series_update)
+    return await crud_meta_series.update(
+        db=session, db_obj=series, obj_in=series_update
+    )
 
 
 @router.delete("/{series_id}", status_code=204)

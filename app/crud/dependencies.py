@@ -1,4 +1,5 @@
 """CRUD operations for dependencies."""
+
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -32,11 +33,11 @@ class crudDependency(crudBase[seriesDependencyGraph]):
     ) -> list[seriesDependencyGraph]:
         """Get multiple dependencies with filters."""
         query = select(seriesDependencyGraph)
-        
+
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
         query = filter_obj.sort(query)
-        
+
         result = await db.execute(query)
         return list(result.scalars().all())
 
@@ -65,11 +66,11 @@ class crudCalculation(crudBase[calculationLog]):
     ) -> list[calculationLog]:
         """Get multiple calculation logs with filters."""
         query = select(calculationLog)
-        
+
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
         query = filter_obj.sort(query)
-        
+
         result = await db.execute(query)
         return list(result.scalars().all())
 

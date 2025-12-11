@@ -1,4 +1,5 @@
 """Redis connection pool management."""
+
 import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
@@ -53,7 +54,8 @@ class redisConnectionManager:
 # make it possible to import this module without having to connect to Redis.
 # This is useful for unit tests.
 _redis_connection_manager: redisConnectionManager = redisConnectionManager(
-    app.core.config.settings)
+    app.core.config.settings
+)
 
 
 def init() -> None:
@@ -87,8 +89,8 @@ async def get_redis_conn() -> AsyncGenerator[redis.Redis, None]:
         raise RuntimeError("Redis connection pool not initialized. Call init() first.")
 
     async with redis.Redis(
-            connection_pool=_redis_connection_manager.connection_pool,
-            auto_close_connection_pool=False,
+        connection_pool=_redis_connection_manager.connection_pool,
+        auto_close_connection_pool=False,
     ) as conn:
         yield conn
 
@@ -110,8 +112,8 @@ async def get_redis_conn_context() -> AsyncGenerator[redis.Redis, None]:
         raise RuntimeError("Redis connection pool not initialized. Call init() first.")
 
     async with redis.Redis(
-            connection_pool=_redis_connection_manager.connection_pool,
-            auto_close_connection_pool=False,
+        connection_pool=_redis_connection_manager.connection_pool,
+        auto_close_connection_pool=False,
     ) as conn:
         yield conn
 
@@ -130,7 +132,7 @@ async def redis_health_check(timeout: float = 5.0) -> None:
         raise RuntimeError("Redis connection pool not initialized.")
 
     async with redis.Redis(
-            connection_pool=_redis_connection_manager.connection_pool,
-            auto_close_connection_pool=False,
+        connection_pool=_redis_connection_manager.connection_pool,
+        auto_close_connection_pool=False,
     ) as redis_conn:
         await asyncio.wait_for(redis_conn.ping(), timeout=timeout)

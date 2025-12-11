@@ -1,11 +1,16 @@
 """CRUD operations for lookup tables."""
+
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.crud.base import crudBase
-from app.models.lookup_tables import assetClassLookup, productTypeLookup
-from app.schemas.filters import assetClassFilter, productTypeFilter
+from app.models.lookup_tables import (
+    assetClassLookup,
+    productTypeLookup,
+    tickerSourceLookup,
+)
+from app.schemas.filters import assetClassFilter, productTypeFilter, tickerSourceFilter
 
 
 class crudAssetClass(crudBase[assetClassLookup]):
@@ -32,11 +37,11 @@ class crudAssetClass(crudBase[assetClassLookup]):
     ) -> list[assetClassLookup]:
         """Get multiple asset classes with filters."""
         query = select(assetClassLookup)
-        
+
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
         query = filter_obj.sort(query)
-        
+
         result = await db.execute(query)
         return list(result.scalars().all())
 
@@ -65,11 +70,44 @@ class crudProductType(crudBase[productTypeLookup]):
     ) -> list[productTypeLookup]:
         """Get multiple product types with filters."""
         query = select(productTypeLookup)
-        
+
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
         query = filter_obj.sort(query)
-        
+
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+
+class crudTickerSource(crudBase[tickerSourceLookup]):
+    """CRUD operations for TickerSourceLookup."""
+
+    async def get_by_id(
+        self,
+        db: AsyncSession,
+        *,
+        ticker_source_id: int,
+    ) -> Optional[tickerSourceLookup]:
+        """Get a ticker source by ticker_source_id."""
+        query = select(tickerSourceLookup).where(
+            tickerSourceLookup.ticker_source_id == ticker_source_id
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_multi_with_filters(
+        self,
+        db: AsyncSession,
+        *,
+        filter_obj: tickerSourceFilter,
+    ) -> list[tickerSourceLookup]:
+        """Get multiple ticker sources with filters."""
+        query = select(tickerSourceLookup)
+
+        # Apply fastapi-filter filters
+        query = filter_obj.filter(query)
+        query = filter_obj.sort(query)
+
         result = await db.execute(query)
         return list(result.scalars().all())
 
@@ -77,3 +115,4 @@ class crudProductType(crudBase[productTypeLookup]):
 # Create instances
 crud_asset_class = crudAssetClass(assetClassLookup)
 crud_product_type = crudProductType(productTypeLookup)
+crud_ticker_source = crudTickerSource(tickerSourceLookup)
