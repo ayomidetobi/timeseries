@@ -1,4 +1,4 @@
-from decouple import config, Csv
+from decouple import config
 from typing import Optional
 
 
@@ -20,6 +20,7 @@ class Settings:
     # Application
     app_name: str = config("APP_NAME", default="Financial Data API")
     debug: bool = config("DEBUG", default=False, cast=cast_bool)
+    log_level: str = config("LOG_LEVEL", default="INFO")
     
     # Database - Railway PostgreSQL (defaults can be overridden via .env)
     database_url: str = config(
@@ -41,6 +42,15 @@ class Settings:
     redis_password: Optional[str] = config("REDIS_PASSWORD", default=None)
     redis_encoding: str = config("REDIS_ENCODING", default="UTF-8")
     redis_decode_responses: bool = config("REDIS_DECODE_RESPONSES", default=True, cast=bool)
+    
+    # ClickHouse settings (optional)
+    clickhouse_host: str = config("CLICKHOUSE_HOST", default="localhost")
+    clickhouse_port: int = config("CLICKHOUSE_PORT", default=8123, cast=int)
+    clickhouse_username: str = config("CLICKHOUSE_USERNAME", default="default")
+    clickhouse_password: Optional[str] = config("CLICKHOUSE_PASSWORD", default=None)
+    clickhouse_database: str = config("CLICKHOUSE_DATABASE", default="default")
+    clickhouse_secure: bool = config("CLICKHOUSE_SECURE", default=False, cast=cast_bool)
+    clickhouse_verify: bool = config("CLICKHOUSE_VERIFY", default=True, cast=cast_bool)
 
 
 settings = Settings()

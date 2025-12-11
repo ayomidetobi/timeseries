@@ -15,10 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import app.core.config
 
 
-class DatabaseConnectionManager:
+class databaseConnectionManager:
     """Database connection manager."""
 
-    def __init__(self, settings: app.core.config.Settings) -> None:
+    def __init__(self, settings: app.core.config.settings) -> None:
         self.database_url = settings.database_url
         self.engine = None
         self.sessionmaker = None
@@ -65,7 +65,7 @@ class DatabaseConnectionManager:
 # The creation of the `engine` is delayed until `init()` is called, to
 # make it possible to import this module without having to connect to the database.
 # This is useful for unit tests.
-_db_connection_manager: DatabaseConnectionManager = DatabaseConnectionManager(
+_db_connection_manager: databaseConnectionManager = databaseConnectionManager(
     app.core.config.settings)
 
 

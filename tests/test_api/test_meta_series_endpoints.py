@@ -3,7 +3,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.factories import AssetClassFactory, ProductTypeFactory, MetaSeriesFactory
+from tests.factories import assetClassFactory, productTypeFactory, metaSeriesFactory
 
 
 @pytest.mark.asyncio
@@ -14,18 +14,18 @@ class TestMetaSeriesEndpoints:
     async def test_create_meta_series(self, async_client: AsyncClient, test_session: AsyncSession):
         """Test POST /api/v1/meta-series/"""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
-        product_type = ProductTypeFactory()
+        product_type = productTypeFactory()
         test_session.add(product_type)
         await test_session.commit()
         await test_session.refresh(product_type)
         
         # Create series data
-        series_data = MetaSeriesFactory.build(
+        series_data = metaSeriesFactory.build(
             asset_class_id=asset_class.asset_class_id,
             product_type_id=product_type.product_type_id
         )
@@ -44,14 +44,14 @@ class TestMetaSeriesEndpoints:
     async def test_get_meta_series_list(self, async_client: AsyncClient, test_session: AsyncSession):
         """Test GET /api/v1/meta-series/"""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
         # Create multiple series
         for _ in range(5):
-            series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
+            series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
             test_session.add(series)
         
         await test_session.commit()
@@ -65,13 +65,13 @@ class TestMetaSeriesEndpoints:
     async def test_get_meta_series_by_id(self, async_client: AsyncClient, test_session: AsyncSession):
         """Test GET /api/v1/meta-series/{series_id}"""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
         # Create series
-        series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
+        series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
         test_session.add(series)
         await test_session.commit()
         await test_session.refresh(series)
@@ -93,13 +93,13 @@ class TestMetaSeriesEndpoints:
     async def test_update_meta_series(self, async_client: AsyncClient, test_session: AsyncSession):
         """Test PUT /api/v1/meta-series/{series_id}"""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
         # Create series
-        series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
+        series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
         test_session.add(series)
         await test_session.commit()
         await test_session.refresh(series)
@@ -123,13 +123,13 @@ class TestMetaSeriesEndpoints:
     async def test_delete_meta_series(self, async_client: AsyncClient, test_session: AsyncSession):
         """Test DELETE /api/v1/meta-series/{series_id}"""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
         # Create series
-        series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id, is_active=True)
+        series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id, is_active=True)
         test_session.add(series)
         await test_session.commit()
         await test_session.refresh(series)

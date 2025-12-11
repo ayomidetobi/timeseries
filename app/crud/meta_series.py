@@ -3,12 +3,12 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.crud.base import CRUDBase
-from app.models.meta_series import MetaSeries
-from app.schemas.filters import MetaSeriesFilter
+from app.crud.base import crudBase
+from app.models.meta_series import metaSeries
+from app.schemas.filters import metaSeriesFilter
 
 
-class CRUDMetaSeries(CRUDBase[MetaSeries]):
+class crudMetaSeries(crudBase[metaSeries]):
     """CRUD operations for MetaSeries."""
 
     async def get_by_id(
@@ -16,9 +16,9 @@ class CRUDMetaSeries(CRUDBase[MetaSeries]):
         db: AsyncSession,
         *,
         series_id: int,
-    ) -> Optional[MetaSeries]:
+    ) -> Optional[metaSeries]:
         """Get a meta series by series_id."""
-        query = select(MetaSeries).where(MetaSeries.series_id == series_id)
+        query = select(metaSeries).where(metaSeries.series_id == series_id)
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -26,10 +26,10 @@ class CRUDMetaSeries(CRUDBase[MetaSeries]):
         self,
         db: AsyncSession,
         *,
-        filter_obj: MetaSeriesFilter,
-    ) -> list[MetaSeries]:
+        filter_obj: metaSeriesFilter,
+    ) -> list[metaSeries]:
         """Get multiple meta series with filters."""
-        query = select(MetaSeries)
+        query = select(metaSeries)
         
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
@@ -43,7 +43,7 @@ class CRUDMetaSeries(CRUDBase[MetaSeries]):
         db: AsyncSession,
         *,
         series_id: int,
-    ) -> Optional[MetaSeries]:
+    ) -> Optional[metaSeries]:
         """Soft delete a meta series by setting is_active=False."""
         series = await self.get_by_id(db, series_id=series_id)
         if series:
@@ -55,4 +55,4 @@ class CRUDMetaSeries(CRUDBase[MetaSeries]):
 
 
 # Create instance
-crud_meta_series = CRUDMetaSeries(MetaSeries)
+crud_meta_series = crudMetaSeries(metaSeries)

@@ -8,7 +8,7 @@ from sqlmodel import SQLModel
 ModelType = TypeVar("ModelType", bound=SQLModel)
 
 
-class CRUDBase(Generic[ModelType]):
+class crudBase(Generic[ModelType]):
     """Base class for CRUD operations."""
 
     def __init__(self, model: Type[ModelType]):

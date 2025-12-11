@@ -4,16 +4,16 @@ from faker import Faker
 from decimal import Decimal
 from datetime import datetime, date, timedelta
 
-from app.models.value_data import ValueData
+from app.models.value_data import valueData
 
 fake = Faker()
 
 
-class ValueDataFactory(factory.Factory):
+class valueDataFactory(factory.Factory):
     """Factory for ValueData."""
     
     class Meta:
-        model = ValueData
+        model = valueData
     
     series_id = None  # Must be set in tests
     timestamp = factory.LazyFunction(lambda: date.today() - timedelta(days=fake.random_int(min=0, max=365)))

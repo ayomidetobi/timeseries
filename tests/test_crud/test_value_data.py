@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.value_data import ValueData
 from app.crud.value_data import crud_value_data
-from tests.factories import AssetClassFactory, MetaSeriesFactory, ValueDataFactory
+from tests.factories import assetClassFactory, metaSeriesFactory, valueDataFactory
 
 
 @pytest.mark.asyncio
@@ -17,18 +17,18 @@ class TestValueDataCRUD:
     async def test_create_value_data(self, test_session: AsyncSession):
         """Test creating value data."""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
-        series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
+        series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
         test_session.add(series)
         await test_session.commit()
         await test_session.refresh(series)
         
         # Create value data
-        value_data = ValueDataFactory.build(
+        value_data = valueDataFactory.build(
             series_id=series.series_id,
             is_derived=False
         )
@@ -45,18 +45,18 @@ class TestValueDataCRUD:
     async def test_create_derived_value_data(self, test_session: AsyncSession):
         """Test creating derived value data."""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
-        series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
+        series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
         test_session.add(series)
         await test_session.commit()
         await test_session.refresh(series)
         
         # Create derived value data
-        value_data = ValueDataFactory.build(
+        value_data = valueDataFactory.build(
             series_id=series.series_id,
             is_derived=True,
             calculation_method="SUM"
@@ -73,18 +73,18 @@ class TestValueDataCRUD:
     async def test_get_value_data_by_id(self, test_session: AsyncSession):
         """Test getting value data by series_id and observation_date."""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
-        series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
+        series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
         test_session.add(series)
         await test_session.commit()
         await test_session.refresh(series)
         
         # Create value data
-        value_data = ValueDataFactory.build(series_id=series.series_id)
+        value_data = valueDataFactory.build(series_id=series.series_id)
         test_session.add(value_data)
         await test_session.commit()
         
@@ -102,19 +102,19 @@ class TestValueDataCRUD:
     async def test_get_multi_value_data(self, test_session: AsyncSession):
         """Test getting multiple value data records."""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
-        series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
+        series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
         test_session.add(series)
         await test_session.commit()
         await test_session.refresh(series)
         
         # Create multiple value data records
         for i in range(10):
-            value_data = ValueDataFactory.build(
+            value_data = valueDataFactory.build(
                 series_id=series.series_id,
                 observation_date=date.today() - timedelta(days=i)
             )
@@ -134,19 +134,19 @@ class TestValueDataCRUD:
     async def test_get_derived_value_data(self, test_session: AsyncSession):
         """Test getting derived value data."""
         # Create dependencies
-        asset_class = AssetClassFactory()
+        asset_class = assetClassFactory()
         test_session.add(asset_class)
         await test_session.commit()
         await test_session.refresh(asset_class)
         
-        series = MetaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
+        series = metaSeriesFactory.build(asset_class_id=asset_class.asset_class_id)
         test_session.add(series)
         await test_session.commit()
         await test_session.refresh(series)
         
         # Create both raw and derived values
         for i in range(5):
-            raw_value = ValueDataFactory.build(
+            raw_value = valueDataFactory.build(
                 series_id=series.series_id,
                 is_derived=False,
                 observation_date=date.today() - timedelta(days=i)
@@ -154,7 +154,7 @@ class TestValueDataCRUD:
             test_session.add(raw_value)
         
         for i in range(3):
-            derived_value = ValueDataFactory.build(
+            derived_value = valueDataFactory.build(
                 series_id=series.series_id,
                 is_derived=True,
                 observation_date=date.today() - timedelta(days=i+5)
@@ -176,7 +176,7 @@ class TestValueDataCRUD:
     
     async def test_create_value_data_invalid_series(self, test_session: AsyncSession):
         """Test creating value data with invalid series_id raises error."""
-        value_data = ValueDataFactory.build(series_id=99999)
+        value_data = valueDataFactory.build(series_id=99999)
         
         with pytest.raises(ValueError, match="Series not found"):
             await crud_value_data.create_with_validation(

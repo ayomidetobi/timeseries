@@ -4,35 +4,35 @@ from faker import Faker
 from datetime import datetime
 
 from app.models.lookup_tables import (
-    AssetClassLookup,
-    ProductTypeLookup,
-    SubAssetClassLookup,
-    DataTypeLookup,
-    StructureTypeLookup,
-    MarketSegmentLookup,
-    FieldTypeLookup,
+    assetClassLookup,
+    productTypeLookup,
+    subAssetClassLookup,
+    dataTypeLookup,
+    structureTypeLookup,
+    marketSegmentLookup,
+    fieldTypeLookup,
 )
 from app.constants.lookup_enums import (
-    AssetClassEnum,
-    SubAssetClassEnum,
-    ProductTypeEnum,
-    DataTypeEnum,
-    StructureTypeEnum,
-    MarketSegmentEnum,
-    FieldTypeEnum,
+    assetClassEnum,
+    subAssetClassEnum,
+    productTypeEnum,
+    dataTypeEnum,
+    structureTypeEnum,
+    marketSegmentEnum,
+    fieldTypeEnum,
 )
 
 fake = Faker()
 
 
-class AssetClassFactory(factory.Factory):
+class assetClassFactory(factory.Factory):
     """Factory for AssetClassLookup."""
     
     class Meta:
-        model = AssetClassLookup
+        model = assetClassLookup
     
     asset_class_name = factory.LazyAttribute(
-        lambda x: fake.random_element(elements=[e.value for e in AssetClassEnum])
+        lambda x: fake.random_element(elements=[e.value for e in assetClassEnum])
         if fake.boolean(chance_of_getting_true=70)
         else fake.word().title() + " " + fake.word().title()
     )
@@ -41,35 +41,35 @@ class AssetClassFactory(factory.Factory):
     updated_at = factory.LazyFunction(datetime.utcnow)
 
 
-class ProductTypeFactory(factory.Factory):
+class productTypeFactory(factory.Factory):
     """Factory for ProductTypeLookup."""
     
     class Meta:
-        model = ProductTypeLookup
+        model = productTypeLookup
     
     product_type_name = factory.LazyAttribute(
-        lambda x: fake.random_element(elements=[e.value for e in ProductTypeEnum])
+        lambda x: fake.random_element(elements=[e.value for e in productTypeEnum])
         if fake.boolean(chance_of_getting_true=70)
         else fake.word().title() + " " + fake.word().title()
     )
     description = factory.LazyAttribute(lambda x: fake.text(max_nb_chars=200))
     is_derived = factory.LazyAttribute(
-        lambda x: x.product_type_name == ProductTypeEnum.INDEX.value
-        if hasattr(x, 'product_type_name') and x.product_type_name in [e.value for e in ProductTypeEnum]
+        lambda x: x.product_type_name == productTypeEnum.INDEX.value
+        if hasattr(x, 'product_type_name') and x.product_type_name in [e.value for e in productTypeEnum]
         else fake.boolean()
     )
     created_at = factory.LazyFunction(datetime.utcnow)
     updated_at = factory.LazyFunction(datetime.utcnow)
 
 
-class SubAssetClassFactory(factory.Factory):
+class subAssetClassFactory(factory.Factory):
     """Factory for SubAssetClassLookup."""
     
     class Meta:
-        model = SubAssetClassLookup
+        model = subAssetClassLookup
     
     sub_asset_class_name = factory.LazyAttribute(
-        lambda x: fake.random_element(elements=[e.value for e in SubAssetClassEnum])
+        lambda x: fake.random_element(elements=[e.value for e in subAssetClassEnum])
         if fake.boolean(chance_of_getting_true=70)
         else fake.word().title() + " " + fake.word().title()
     )
@@ -79,14 +79,14 @@ class SubAssetClassFactory(factory.Factory):
     updated_at = factory.LazyFunction(datetime.utcnow)
 
 
-class DataTypeFactory(factory.Factory):
+class dataTypeFactory(factory.Factory):
     """Factory for DataTypeLookup."""
     
     class Meta:
-        model = DataTypeLookup
+        model = dataTypeLookup
     
     data_type_name = factory.LazyAttribute(
-        lambda x: fake.random_element(elements=[e.value for e in DataTypeEnum])
+        lambda x: fake.random_element(elements=[e.value for e in dataTypeEnum])
         if fake.boolean(chance_of_getting_true=70)
         else fake.word().title() + " " + fake.word().title()
     )
@@ -95,14 +95,14 @@ class DataTypeFactory(factory.Factory):
     updated_at = factory.LazyFunction(datetime.utcnow)
 
 
-class StructureTypeFactory(factory.Factory):
+class structureTypeFactory(factory.Factory):
     """Factory for StructureTypeLookup."""
     
     class Meta:
-        model = StructureTypeLookup
+        model = structureTypeLookup
     
     structure_type_name = factory.LazyAttribute(
-        lambda x: fake.random_element(elements=[e.value for e in StructureTypeEnum])
+        lambda x: fake.random_element(elements=[e.value for e in structureTypeEnum])
         if fake.boolean(chance_of_getting_true=70)
         else fake.word().title() + " " + fake.word().title()
     )
@@ -111,14 +111,14 @@ class StructureTypeFactory(factory.Factory):
     updated_at = factory.LazyFunction(datetime.utcnow)
 
 
-class MarketSegmentFactory(factory.Factory):
+class marketSegmentFactory(factory.Factory):
     """Factory for MarketSegmentLookup."""
     
     class Meta:
-        model = MarketSegmentLookup
+        model = marketSegmentLookup
     
     market_segment_name = factory.LazyAttribute(
-        lambda x: fake.random_element(elements=[e.value for e in MarketSegmentEnum])
+        lambda x: fake.random_element(elements=[e.value for e in marketSegmentEnum])
         if fake.boolean(chance_of_getting_true=70)
         else fake.word().title() + " " + fake.word().title()
     )
@@ -127,14 +127,14 @@ class MarketSegmentFactory(factory.Factory):
     updated_at = factory.LazyFunction(datetime.utcnow)
 
 
-class FieldTypeFactory(factory.Factory):
+class fieldTypeFactory(factory.Factory):
     """Factory for FieldTypeLookup."""
     
     class Meta:
-        model = FieldTypeLookup
+        model = fieldTypeLookup
     
     field_type_name = factory.LazyAttribute(
-        lambda x: fake.random_element(elements=[e.value for e in FieldTypeEnum])
+        lambda x: fake.random_element(elements=[e.value for e in fieldTypeEnum])
         if fake.boolean(chance_of_getting_true=70)
         else fake.word().upper()
     )

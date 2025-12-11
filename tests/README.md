@@ -66,7 +66,7 @@ Factories use `.build()` to create instances without saving, then you manually a
 
 ```python
 # Create instance
-asset_class = AssetClassFactory.build()
+asset_class = assetClassFactory.build()
 test_session.add(asset_class)
 await test_session.commit()
 await test_session.refresh(asset_class)

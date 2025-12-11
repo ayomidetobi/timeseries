@@ -8,10 +8,10 @@ import redis.asyncio as redis
 import app.core.config
 
 
-class RedisConnectionManager:
+class redisConnectionManager:
     """Redis connection manager."""
 
-    def __init__(self, settings: app.core.config.Settings) -> None:
+    def __init__(self, settings: app.core.config.settings) -> None:
         self.hostname = settings.redis_host
         self.port = settings.redis_port
         self.db = settings.redis_db
@@ -52,7 +52,7 @@ class RedisConnectionManager:
 # The creation of the `connection_pool` is delayed until `init()` is called, to
 # make it possible to import this module without having to connect to Redis.
 # This is useful for unit tests.
-_redis_connection_manager: RedisConnectionManager = RedisConnectionManager(
+_redis_connection_manager: redisConnectionManager = redisConnectionManager(
     app.core.config.settings)
 
 

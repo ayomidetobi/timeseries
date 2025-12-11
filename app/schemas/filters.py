@@ -3,13 +3,13 @@ from typing import Optional
 from datetime import date, datetime
 from fastapi_filter.contrib.sqlalchemy import Filter
 
-from app.models.meta_series import MetaSeries
-from app.models.value_data import ValueData
-from app.models.dependency import SeriesDependencyGraph, CalculationLog
-from app.models.lookup_tables import AssetClassLookup, ProductTypeLookup
+from app.models.meta_series import metaSeries
+from app.models.value_data import valueData
+from app.models.dependency import seriesDependencyGraph, calculationLog
+from app.models.lookup_tables import assetClassLookup, productTypeLookup
 
 
-class MetaSeriesFilter(Filter):
+class metaSeriesFilter(Filter):
     """Filter schema for MetaSeries queries."""
     
     is_active: Optional[bool] = None
@@ -33,11 +33,11 @@ class MetaSeriesFilter(Filter):
     order_by: Optional[list[str]] = None
     
     class Constants:
-        model = MetaSeries
+        model = metaSeries
         ordering_field_name = "order_by"
 
 
-class ValueDataFilter(Filter):
+class valueDataFilter(Filter):
     """Filter schema for ValueData queries with support for filtering by MetaSeries and lookup tables."""
     
     # Direct ValueData filters
@@ -76,11 +76,11 @@ class ValueDataFilter(Filter):
     order_by: Optional[list[str]] = None
     
     class Constants:
-        model = ValueData
+        model = valueData
         ordering_field_name = "order_by"
 
 
-class DependencyFilter(Filter):
+class dependencyFilter(Filter):
     """Filter schema for SeriesDependencyGraph queries."""
     
     parent_series_id: Optional[int] = None
@@ -94,11 +94,11 @@ class DependencyFilter(Filter):
     order_by: Optional[list[str]] = None
     
     class Constants:
-        model = SeriesDependencyGraph
+        model = seriesDependencyGraph
         ordering_field_name = "order_by"
 
 
-class CalculationFilter(Filter):
+class calculationFilter(Filter):
     """Filter schema for CalculationLog queries."""
     
     derived_series_id: Optional[int] = None
@@ -113,11 +113,11 @@ class CalculationFilter(Filter):
     order_by: Optional[list[str]] = None
     
     class Constants:
-        model = CalculationLog
+        model = calculationLog
         ordering_field_name = "order_by"
 
 
-class AssetClassFilter(Filter):
+class assetClassFilter(Filter):
     """Filter schema for AssetClassLookup queries."""
     
     asset_class_id: Optional[int] = None
@@ -127,11 +127,11 @@ class AssetClassFilter(Filter):
     order_by: Optional[list[str]] = None
     
     class Constants:
-        model = AssetClassLookup
+        model = assetClassLookup
         ordering_field_name = "order_by"
 
 
-class ProductTypeFilter(Filter):
+class productTypeFilter(Filter):
     """Filter schema for ProductTypeLookup queries."""
     
     product_type_id: Optional[int] = None
@@ -142,5 +142,5 @@ class ProductTypeFilter(Filter):
     order_by: Optional[list[str]] = None
     
     class Constants:
-        model = ProductTypeLookup
+        model = productTypeLookup
         ordering_field_name = "order_by"

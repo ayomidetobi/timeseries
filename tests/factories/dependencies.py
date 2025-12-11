@@ -4,16 +4,16 @@ from faker import Faker
 from decimal import Decimal
 from datetime import datetime
 
-from app.models.dependency import SeriesDependencyGraph, CalculationLog
+from app.models.dependency import seriesDependencyGraph, calculationLog
 
 fake = Faker()
 
 
-class DependencyFactory(factory.Factory):
+class dependencyFactory(factory.Factory):
     """Factory for SeriesDependencyGraph."""
     
     class Meta:
-        model = SeriesDependencyGraph
+        model = seriesDependencyGraph
     
     parent_series_id = None  # Must be set in tests
     child_series_id = None  # Must be set in tests
@@ -26,11 +26,11 @@ class DependencyFactory(factory.Factory):
     created_at = factory.LazyFunction(datetime.utcnow)
 
 
-class CalculationLogFactory(factory.Factory):
+class calculationLogFactory(factory.Factory):
     """Factory for CalculationLog."""
     
     class Meta:
-        model = CalculationLog
+        model = calculationLog
     
     derived_series_id = None  # Must be set in tests
     calculation_method = factory.LazyAttribute(lambda x: fake.random_element(elements=("SUM", "AVG", "MULTIPLY", "DIVIDE", "CUSTOM")))

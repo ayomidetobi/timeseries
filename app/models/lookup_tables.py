@@ -4,10 +4,10 @@ from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Index
 
 if TYPE_CHECKING:
-    from app.models.meta_series import MetaSeries
+    from app.models.meta_series import metaSeries
 
 
-class AssetClassLookup(SQLModel, table=True):
+class assetClassLookup(SQLModel, table=True):
     """Asset class lookup table."""
     
     __tablename__ = "asset_class_lookup"
@@ -22,11 +22,11 @@ class AssetClassLookup(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
     
     # Relationships
-    meta_series: list["MetaSeries"] = Relationship(back_populates="asset_class")
-    sub_asset_classes: list["SubAssetClassLookup"] = Relationship(back_populates="asset_class")
+    meta_series: list["metaSeries"] = Relationship(back_populates="asset_class")
+    sub_asset_classes: list["subAssetClassLookup"] = Relationship(back_populates="asset_class")
 
 
-class ProductTypeLookup(SQLModel, table=True):
+class productTypeLookup(SQLModel, table=True):
     """Product type lookup table."""
     
     __tablename__ = "product_type_lookup"
@@ -44,10 +44,10 @@ class ProductTypeLookup(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
     
     # Relationships
-    meta_series: list["MetaSeries"] = Relationship(back_populates="product_type")
+    meta_series: list["metaSeries"] = Relationship(back_populates="product_type")
 
 
-class SubAssetClassLookup(SQLModel, table=True):
+class subAssetClassLookup(SQLModel, table=True):
     """Sub-asset class lookup table."""
     
     __tablename__ = "sub_asset_class_lookup"
@@ -65,11 +65,11 @@ class SubAssetClassLookup(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
     
     # Relationships
-    asset_class: Optional["AssetClassLookup"] = Relationship(back_populates="sub_asset_classes")
-    meta_series: list["MetaSeries"] = Relationship(back_populates="sub_asset_class")
+    asset_class: Optional["assetClassLookup"] = Relationship(back_populates="sub_asset_classes")
+    meta_series: list["metaSeries"] = Relationship(back_populates="sub_asset_class")
 
 
-class DataTypeLookup(SQLModel, table=True):
+class dataTypeLookup(SQLModel, table=True):
     """Data type lookup table."""
     
     __tablename__ = "data_type_lookup"
@@ -84,10 +84,10 @@ class DataTypeLookup(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
     
     # Relationships
-    meta_series: list["MetaSeries"] = Relationship(back_populates="data_type")
+    meta_series: list["metaSeries"] = Relationship(back_populates="data_type")
 
 
-class StructureTypeLookup(SQLModel, table=True):
+class structureTypeLookup(SQLModel, table=True):
     """Structure type lookup table."""
     
     __tablename__ = "structure_type_lookup"
@@ -102,10 +102,10 @@ class StructureTypeLookup(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
     
     # Relationships
-    meta_series: list["MetaSeries"] = Relationship(back_populates="structure_type")
+    meta_series: list["metaSeries"] = Relationship(back_populates="structure_type")
 
 
-class MarketSegmentLookup(SQLModel, table=True):
+class marketSegmentLookup(SQLModel, table=True):
     """Market segment lookup table."""
     
     __tablename__ = "market_segment_lookup"
@@ -120,10 +120,10 @@ class MarketSegmentLookup(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
     
     # Relationships
-    meta_series: list["MetaSeries"] = Relationship(back_populates="market_segment")
+    meta_series: list["metaSeries"] = Relationship(back_populates="market_segment")
 
 
-class FieldTypeLookup(SQLModel, table=True):
+class fieldTypeLookup(SQLModel, table=True):
     """Field type lookup table (FLDS)."""
     
     __tablename__ = "field_type_lookup"
@@ -138,5 +138,5 @@ class FieldTypeLookup(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
     
     # Relationships
-    meta_series: list["MetaSeries"] = Relationship(back_populates="field_type")
+    meta_series: list["metaSeries"] = Relationship(back_populates="field_type")
 

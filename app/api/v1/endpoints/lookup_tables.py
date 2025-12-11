@@ -5,23 +5,23 @@ from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.models.lookup_tables import AssetClassLookup, ProductTypeLookup
-from app.schemas.filters import AssetClassFilter, ProductTypeFilter
+from app.models.lookup_tables import assetClassLookup, productTypeLookup
+from app.schemas.filters import assetClassFilter, productTypeFilter
 from app.crud.lookup_tables import crud_asset_class, crud_product_type
 
 router = APIRouter()
 
 
-@router.get("/asset-classes/", response_model=List[AssetClassLookup])
+@router.get("/asset-classes/", response_model=List[assetClassLookup])
 async def get_asset_classes(
-    filters: AssetClassFilter = FilterDepends(AssetClassFilter),
+    filters: assetClassFilter = FilterDepends(assetClassFilter),
     session: AsyncSession = Depends(get_session),
 ):
     """Get list of asset classes."""
     return await crud_asset_class.get_multi_with_filters(db=session, filter_obj=filters)
 
 
-@router.get("/asset-classes/{asset_class_id}", response_model=AssetClassLookup)
+@router.get("/asset-classes/{asset_class_id}", response_model=assetClassLookup)
 async def get_asset_class_by_id(
     asset_class_id: int,
     session: AsyncSession = Depends(get_session),
@@ -36,25 +36,25 @@ async def get_asset_class_by_id(
     return asset_class
 
 
-@router.post("/asset-classes/", response_model=AssetClassLookup, status_code=201)
+@router.post("/asset-classes/", response_model=assetClassLookup, status_code=201)
 async def create_asset_class(
-    asset_class: AssetClassLookup,
+    asset_class: assetClassLookup,
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new asset class."""
     return await crud_asset_class.create(db=session, obj_in=asset_class)
 
 
-@router.get("/product-types/", response_model=List[ProductTypeLookup])
+@router.get("/product-types/", response_model=List[productTypeLookup])
 async def get_product_types(
-    filters: ProductTypeFilter = FilterDepends(ProductTypeFilter),
+    filters: productTypeFilter = FilterDepends(productTypeFilter),
     session: AsyncSession = Depends(get_session),
 ):
     """Get list of product types."""
     return await crud_product_type.get_multi_with_filters(db=session, filter_obj=filters)
 
 
-@router.get("/product-types/{product_type_id}", response_model=ProductTypeLookup)
+@router.get("/product-types/{product_type_id}", response_model=productTypeLookup)
 async def get_product_type_by_id(
     product_type_id: int,
     session: AsyncSession = Depends(get_session),
@@ -69,9 +69,9 @@ async def get_product_type_by_id(
     return product_type
 
 
-@router.post("/product-types/", response_model=ProductTypeLookup, status_code=201)
+@router.post("/product-types/", response_model=productTypeLookup, status_code=201)
 async def create_product_type(
-    product_type: ProductTypeLookup,
+    product_type: productTypeLookup,
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new product type."""

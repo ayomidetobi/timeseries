@@ -6,11 +6,10 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy import Integer, Index
 
 if TYPE_CHECKING:
-    from app.models.meta_series import MetaSeries
-    from app.models.value_data import ValueData
+    from app.models.meta_series import metaSeries
 
 
-class SeriesDependencyGraph(SQLModel, table=True):
+class seriesDependencyGraph(SQLModel, table=True):
     """Series dependency graph table for tracking dependencies between series."""
     
     __tablename__ = "series_dependency_graph"
@@ -32,17 +31,17 @@ class SeriesDependencyGraph(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     # Relationships
-    parent_series: "MetaSeries" = Relationship(
+    parent_series: "metaSeries" = Relationship(
         back_populates="parent_dependencies",
-        sa_relationship_kwargs={"foreign_keys": "SeriesDependencyGraph.parent_series_id"}
+        sa_relationship_kwargs={"foreign_keys": "seriesDependencyGraph.parent_series_id"}
     )
-    child_series: "MetaSeries" = Relationship(
+    child_series: "metaSeries" = Relationship(
         back_populates="child_dependencies",
-        sa_relationship_kwargs={"foreign_keys": "SeriesDependencyGraph.child_series_id"}
+        sa_relationship_kwargs={"foreign_keys": "seriesDependencyGraph.child_series_id"}
     )
 
 
-class CalculationLog(SQLModel, table=True):
+class calculationLog(SQLModel, table=True):
     """Calculation log table for tracking derived value calculations."""
     
     __tablename__ = "calculation_log"
@@ -67,6 +66,10 @@ class CalculationLog(SQLModel, table=True):
     calculation_policy: Optional[str] = Field(default=None, max_length=50)
     
     # Relationships
-    derived_series: "MetaSeries" = Relationship(back_populates="calculations")
-    derived_values: list["ValueData"] = Relationship(back_populates="calculation")
+    derived_series: "metaSeries" = Relationship(
+        back_populates="calculations",
+        sa_relationship_kwargs={"foreign_keys": "calculationLog.derived_series_id"}
+    )
+    # Note: derived_values relationship removed - ValueData is now in ClickHouse and cannot have SQLAlchemy relationships
+    # Use the CRUD layer to query value_data from ClickHouse instead
 

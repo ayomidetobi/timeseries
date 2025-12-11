@@ -2,14 +2,14 @@
 from enum import Enum
 
 
-class AssetClassEnum(str, Enum):
+class assetClassEnum(str, Enum):
     """Enum for asset classes."""
     COMMODITY = "Commodity"
     CREDIT = "Credit"
     FX = "FX"
 
 
-class SubAssetClassEnum(str, Enum):
+class subAssetClassEnum(str, Enum):
     """Enum for sub-asset classes."""
     BASE_METALS = "Base Metals"
     ENERGY = "Energy"
@@ -21,32 +21,32 @@ class SubAssetClassEnum(str, Enum):
     G10 = "G10"
 
 
-class ProductTypeEnum(str, Enum):
+class productTypeEnum(str, Enum):
     """Enum for product types."""
     SPOT = "Spot"
     INDEX = "Index"
 
 
-class StructureTypeEnum(str, Enum):
+class structureTypeEnum(str, Enum):
     """Enum for structure types."""
     OUTRIGHT = "Outright"
 
 
-class MarketSegmentEnum(str, Enum):
+class marketSegmentEnum(str, Enum):
     """Enum for market segments."""
     GLOBAL = "Global"
     DM = "DM"
     EM = "EM"
 
 
-class DataTypeEnum(str, Enum):
+class dataTypeEnum(str, Enum):
     """Enum for data types."""
     PRICE = "Price"
     OPEN_INTEREST = "Open Interest"
     PRICE_SPREAD = "Price Spread"
 
 
-class FieldTypeEnum(str, Enum):
+class fieldTypeEnum(str, Enum):
     """Enum for field types (FLDS)."""
     PX_LAST = "PX_LAST"
     OPEN_INT = "OPEN_INT"
@@ -58,11 +58,11 @@ class FieldTypeEnum(str, Enum):
 
 # Ticker suffix mapping based on asset class and product type
 TICKER_SUFFIX_MAP = {
-    (AssetClassEnum.COMMODITY, ProductTypeEnum.SPOT): "Comdty",
-    (AssetClassEnum.FX, ProductTypeEnum.SPOT): "Curncy",
-    (AssetClassEnum.CREDIT, ProductTypeEnum.INDEX): "Index",
-    (AssetClassEnum.COMMODITY, ProductTypeEnum.INDEX): "Index",
-    (AssetClassEnum.FX, ProductTypeEnum.INDEX): "Index",
+    (assetClassEnum.COMMODITY, productTypeEnum.SPOT): "Comdty",
+    (assetClassEnum.FX, productTypeEnum.SPOT): "Curncy",
+    (assetClassEnum.CREDIT, productTypeEnum.INDEX): "Index",
+    (assetClassEnum.COMMODITY, productTypeEnum.INDEX): "Index",
+    (assetClassEnum.FX, productTypeEnum.INDEX): "Index",
 }
 
 # Limited commodity names (about 10)
@@ -81,35 +81,35 @@ COMMODITY_NAMES = [
 
 # Sub-asset class to commodity mapping
 COMMODITY_SUB_ASSET_MAP = {
-    SubAssetClassEnum.BASE_METALS: ["Copper", "Aluminum", "Zinc", "Nickel"],
-    SubAssetClassEnum.ENERGY: ["Oil, WTI", "Oil, Brent", "Natural Gas"],
-    SubAssetClassEnum.PRECIOUS_METALS: ["Gold", "Silver", "Platinum"],
+    subAssetClassEnum.BASE_METALS: ["Copper", "Aluminum", "Zinc", "Nickel"],
+    subAssetClassEnum.ENERGY: ["Oil, WTI", "Oil, Brent", "Natural Gas"],
+    subAssetClassEnum.PRECIOUS_METALS: ["Gold", "Silver", "Platinum"],
 }
 
 # Market segment to sub-asset class mapping for FX
 FX_MARKET_SUB_ASSET_MAP = {
-    MarketSegmentEnum.GLOBAL: [SubAssetClassEnum.G10],
-    MarketSegmentEnum.DM: [SubAssetClassEnum.G10],
-    MarketSegmentEnum.EM: [
-        SubAssetClassEnum.EM_LATAM,
-        SubAssetClassEnum.EM_CEEMEA,
-        SubAssetClassEnum.EM_APAC,
+    marketSegmentEnum.GLOBAL: [subAssetClassEnum.G10],
+    marketSegmentEnum.DM: [subAssetClassEnum.G10],
+    marketSegmentEnum.EM: [
+        subAssetClassEnum.EM_LATAM,
+        subAssetClassEnum.EM_CEEMEA,
+        subAssetClassEnum.EM_APAC,
     ],
 }
 
 # Asset class to sub-asset class mapping
 ASSET_CLASS_SUB_ASSET_MAP = {
-    AssetClassEnum.COMMODITY: [
-        SubAssetClassEnum.BASE_METALS,
-        SubAssetClassEnum.ENERGY,
-        SubAssetClassEnum.PRECIOUS_METALS,
+    assetClassEnum.COMMODITY: [
+        subAssetClassEnum.BASE_METALS,
+        subAssetClassEnum.ENERGY,
+        subAssetClassEnum.PRECIOUS_METALS,
     ],
-    AssetClassEnum.CREDIT: [SubAssetClassEnum.OAS],
-    AssetClassEnum.FX: [
-        SubAssetClassEnum.EM_LATAM,
-        SubAssetClassEnum.EM_CEEMEA,
-        SubAssetClassEnum.EM_APAC,
-        SubAssetClassEnum.G10,
+    assetClassEnum.CREDIT: [subAssetClassEnum.OAS],
+    assetClassEnum.FX: [
+        subAssetClassEnum.EM_LATAM,
+        subAssetClassEnum.EM_CEEMEA,
+        subAssetClassEnum.EM_APAC,
+        subAssetClassEnum.G10,
     ],
 }
 

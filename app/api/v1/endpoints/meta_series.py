@@ -5,23 +5,23 @@ from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.models.meta_series import MetaSeries
-from app.schemas.filters import MetaSeriesFilter
+from app.models.meta_series import metaSeries
+from app.schemas.filters import metaSeriesFilter
 from app.crud.meta_series import crud_meta_series
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[MetaSeries])
+@router.get("/", response_model=List[metaSeries])
 async def get_meta_series(
-    filters: MetaSeriesFilter = FilterDepends(MetaSeriesFilter),
+    filters: metaSeriesFilter = FilterDepends(metaSeriesFilter),
     session: AsyncSession = Depends(get_session),
 ):
     """Get list of meta series with optional filters."""
     return await crud_meta_series.get_multi_with_filters(db=session, filter_obj=filters)
 
 
-@router.get("/{series_id}", response_model=MetaSeries)
+@router.get("/{series_id}", response_model=metaSeries)
 async def get_meta_series_by_id(
     series_id: int,
     session: AsyncSession = Depends(get_session),
@@ -33,19 +33,19 @@ async def get_meta_series_by_id(
     return series
 
 
-@router.post("/", response_model=MetaSeries, status_code=201)
+@router.post("/", response_model=metaSeries, status_code=201)
 async def create_meta_series(
-    series: MetaSeries,
+    series: metaSeries,
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new meta series."""
     return await crud_meta_series.create(db=session, obj_in=series)
 
 
-@router.put("/{series_id}", response_model=MetaSeries)
+@router.put("/{series_id}", response_model=metaSeries)
 async def update_meta_series(
     series_id: int,
-    series_update: MetaSeries,
+    series_update: metaSeries,
     session: AsyncSession = Depends(get_session),
 ):
     """Update an existing meta series."""

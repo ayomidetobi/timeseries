@@ -3,12 +3,12 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.crud.base import CRUDBase
-from app.models.dependency import SeriesDependencyGraph, CalculationLog
-from app.schemas.filters import DependencyFilter, CalculationFilter
+from app.crud.base import crudBase
+from app.models.dependency import seriesDependencyGraph, calculationLog
+from app.schemas.filters import dependencyFilter, calculationFilter
 
 
-class CRUDDependency(CRUDBase[SeriesDependencyGraph]):
+class crudDependency(crudBase[seriesDependencyGraph]):
     """CRUD operations for SeriesDependencyGraph."""
 
     async def get_by_id(
@@ -16,10 +16,10 @@ class CRUDDependency(CRUDBase[SeriesDependencyGraph]):
         db: AsyncSession,
         *,
         dependency_id: int,
-    ) -> Optional[SeriesDependencyGraph]:
+    ) -> Optional[seriesDependencyGraph]:
         """Get a dependency by dependency_id."""
-        query = select(SeriesDependencyGraph).where(
-            SeriesDependencyGraph.dependency_id == dependency_id
+        query = select(seriesDependencyGraph).where(
+            seriesDependencyGraph.dependency_id == dependency_id
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -28,10 +28,10 @@ class CRUDDependency(CRUDBase[SeriesDependencyGraph]):
         self,
         db: AsyncSession,
         *,
-        filter_obj: DependencyFilter,
-    ) -> list[SeriesDependencyGraph]:
+        filter_obj: dependencyFilter,
+    ) -> list[seriesDependencyGraph]:
         """Get multiple dependencies with filters."""
-        query = select(SeriesDependencyGraph)
+        query = select(seriesDependencyGraph)
         
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
@@ -41,7 +41,7 @@ class CRUDDependency(CRUDBase[SeriesDependencyGraph]):
         return list(result.scalars().all())
 
 
-class CRUDCalculation(CRUDBase[CalculationLog]):
+class crudCalculation(crudBase[calculationLog]):
     """CRUD operations for CalculationLog."""
 
     async def get_by_id(
@@ -49,10 +49,10 @@ class CRUDCalculation(CRUDBase[CalculationLog]):
         db: AsyncSession,
         *,
         calculation_id: int,
-    ) -> Optional[CalculationLog]:
+    ) -> Optional[calculationLog]:
         """Get a calculation log by calculation_id."""
-        query = select(CalculationLog).where(
-            CalculationLog.calculation_id == calculation_id
+        query = select(calculationLog).where(
+            calculationLog.calculation_id == calculation_id
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -61,10 +61,10 @@ class CRUDCalculation(CRUDBase[CalculationLog]):
         self,
         db: AsyncSession,
         *,
-        filter_obj: CalculationFilter,
-    ) -> list[CalculationLog]:
+        filter_obj: calculationFilter,
+    ) -> list[calculationLog]:
         """Get multiple calculation logs with filters."""
-        query = select(CalculationLog)
+        query = select(calculationLog)
         
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
@@ -75,5 +75,5 @@ class CRUDCalculation(CRUDBase[CalculationLog]):
 
 
 # Create instances
-crud_dependency = CRUDDependency(SeriesDependencyGraph)
-crud_calculation = CRUDCalculation(CalculationLog)
+crud_dependency = crudDependency(seriesDependencyGraph)
+crud_calculation = crudCalculation(calculationLog)

@@ -3,12 +3,12 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.crud.base import CRUDBase
-from app.models.lookup_tables import AssetClassLookup, ProductTypeLookup
-from app.schemas.filters import AssetClassFilter, ProductTypeFilter
+from app.crud.base import crudBase
+from app.models.lookup_tables import assetClassLookup, productTypeLookup
+from app.schemas.filters import assetClassFilter, productTypeFilter
 
 
-class CRUDAssetClass(CRUDBase[AssetClassLookup]):
+class crudAssetClass(crudBase[assetClassLookup]):
     """CRUD operations for AssetClassLookup."""
 
     async def get_by_id(
@@ -16,10 +16,10 @@ class CRUDAssetClass(CRUDBase[AssetClassLookup]):
         db: AsyncSession,
         *,
         asset_class_id: int,
-    ) -> Optional[AssetClassLookup]:
+    ) -> Optional[assetClassLookup]:
         """Get an asset class by asset_class_id."""
-        query = select(AssetClassLookup).where(
-            AssetClassLookup.asset_class_id == asset_class_id
+        query = select(assetClassLookup).where(
+            assetClassLookup.asset_class_id == asset_class_id
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -28,10 +28,10 @@ class CRUDAssetClass(CRUDBase[AssetClassLookup]):
         self,
         db: AsyncSession,
         *,
-        filter_obj: AssetClassFilter,
-    ) -> list[AssetClassLookup]:
+        filter_obj: assetClassFilter,
+    ) -> list[assetClassLookup]:
         """Get multiple asset classes with filters."""
-        query = select(AssetClassLookup)
+        query = select(assetClassLookup)
         
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
@@ -41,7 +41,7 @@ class CRUDAssetClass(CRUDBase[AssetClassLookup]):
         return list(result.scalars().all())
 
 
-class CRUDProductType(CRUDBase[ProductTypeLookup]):
+class crudProductType(crudBase[productTypeLookup]):
     """CRUD operations for ProductTypeLookup."""
 
     async def get_by_id(
@@ -49,10 +49,10 @@ class CRUDProductType(CRUDBase[ProductTypeLookup]):
         db: AsyncSession,
         *,
         product_type_id: int,
-    ) -> Optional[ProductTypeLookup]:
+    ) -> Optional[productTypeLookup]:
         """Get a product type by product_type_id."""
-        query = select(ProductTypeLookup).where(
-            ProductTypeLookup.product_type_id == product_type_id
+        query = select(productTypeLookup).where(
+            productTypeLookup.product_type_id == product_type_id
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -61,10 +61,10 @@ class CRUDProductType(CRUDBase[ProductTypeLookup]):
         self,
         db: AsyncSession,
         *,
-        filter_obj: ProductTypeFilter,
-    ) -> list[ProductTypeLookup]:
+        filter_obj: productTypeFilter,
+    ) -> list[productTypeLookup]:
         """Get multiple product types with filters."""
-        query = select(ProductTypeLookup)
+        query = select(productTypeLookup)
         
         # Apply fastapi-filter filters
         query = filter_obj.filter(query)
@@ -75,5 +75,5 @@ class CRUDProductType(CRUDBase[ProductTypeLookup]):
 
 
 # Create instances
-crud_asset_class = CRUDAssetClass(AssetClassLookup)
-crud_product_type = CRUDProductType(ProductTypeLookup)
+crud_asset_class = crudAssetClass(assetClassLookup)
+crud_product_type = crudProductType(productTypeLookup)

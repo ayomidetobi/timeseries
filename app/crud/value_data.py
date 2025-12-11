@@ -1,57 +1,119 @@
-"""CRUD operations for ValueData."""
-from typing import Optional, cast
+"""CRUD operations for valueData using ClickHouse."""
+import asyncio
+from typing import Optional, cast, Any
 from datetime import date, datetime, timedelta
+from decimal import Decimal
+import clickhouse_connect
+import pytimeparse2  # type: ignore
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
-from sqlalchemy.sql import Select
-import pytimeparse2
 
-from app.crud.base import CRUDBase
-from app.models.value_data import ValueData
-from app.models.meta_series import MetaSeries
+from app.models.value_data import valueData
+from app.models.meta_series import metaSeries
 from app.models.lookup_tables import (
-    AssetClassLookup,
-    SubAssetClassLookup,
-    ProductTypeLookup,
-    DataTypeLookup,
-    StructureTypeLookup,
-    MarketSegmentLookup,
-    FieldTypeLookup,
+    assetClassLookup,
+    subAssetClassLookup,
+    productTypeLookup,
+    dataTypeLookup,
+    structureTypeLookup,
+    marketSegmentLookup,
+    fieldTypeLookup,
 )
-from app.schemas.filters import ValueDataFilter
+from app.schemas.filters import valueDataFilter
 
 
-class CRUDValueData(CRUDBase[ValueData]):
-    """CRUD operations for ValueData."""
+class crudValueData:
+    """CRUD operations for valueData in ClickHouse."""
 
-    async def get_by_id(
-        self,
-        db: AsyncSession,
-        *,
-        series_id: int,
-        timestamp: date,
-    ) -> Optional[ValueData]:
-        """Get value data by series_id and timestamp."""
-        query = select(ValueData).where(
-            and_(
-                ValueData.series_id == series_id,
-                ValueData.timestamp == timestamp,
-            )
-        )
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
-
-    async def get_multi_with_filters(
-        self,
-        db: AsyncSession,
-        *,
-        filter_obj: ValueDataFilter,
-    ) -> list[ValueData]:
-        """Get multiple value data records with filters, including MetaSeries and lookup table filters."""
-        # Start with ValueData and join MetaSeries for filtering
-        query = select(ValueData).join(MetaSeries, ValueData.series_id == MetaSeries.series_id)
+    def __init__(self, clickhouse_client: clickhouse_connect.driver.Client):
+        """Initialize with ClickHouse client."""
+        self.client = clickhouse_client
+    
+    def _build_clickhouse_conditions(self, filter_obj: valueDataFilter) -> tuple[list[str], dict[str, Any]]:
+        """Build ClickHouse query conditions and parameters from filter object."""
+        conditions = []
+        params: dict[str, Any] = {}
         
-        # Track which lookup tables need to be joined (for name-based filtering)
+        # Direct valueData filters
+        if filter_obj.series_id is not None:
+            conditions.append("series_id = {series_id:UInt32}")
+            params['series_id'] = filter_obj.series_id
+        elif filter_obj.series_id__in is not None:
+            series_ids = cast(list[int], filter_obj.series_id__in)
+            conditions.append(f"series_id IN ({','.join(map(str, series_ids))})")
+        
+        # Timestamp filters
+        if filter_obj.timestamp__ago is not None:
+            seconds_ago = pytimeparse2.parse(filter_obj.timestamp__ago)
+            if seconds_ago is not None:
+                time_ago = datetime.now() - timedelta(seconds=seconds_ago)
+                conditions.append("timestamp >= {timestamp__gte:Date}")
+                params['timestamp__gte'] = time_ago.date()
+        
+        if filter_obj.timestamp__gte is not None:
+            conditions.append("timestamp >= {timestamp__gte:Date}")
+            params['timestamp__gte'] = filter_obj.timestamp__gte
+        
+        if filter_obj.timestamp__lte is not None:
+            conditions.append("timestamp <= {timestamp__lte:Date}")
+            params['timestamp__lte'] = filter_obj.timestamp__lte
+        
+        # Value filters
+        if filter_obj.value__gte is not None:
+            conditions.append("value >= {value__gte:Float64}")
+            params['value__gte'] = float(filter_obj.value__gte)
+        
+        if filter_obj.value__lte is not None:
+            conditions.append("value <= {value__lte:Float64}")
+            params['value__lte'] = float(filter_obj.value__lte)
+        
+        return conditions, params
+    
+    def _has_metadata_filters(self, filter_obj: valueDataFilter) -> bool:
+        """Check if filter object contains any metadata filters that require PostgreSQL query."""
+        metadata_filter_fields = [
+            filter_obj.series_name__ilike,
+            filter_obj.series_name__in,
+            filter_obj.ticker__ilike,
+            filter_obj.is_active,
+            filter_obj.is_derived,
+            filter_obj.is_latest,
+            filter_obj.asset_class_name,
+            filter_obj.asset_class_name__in,
+            filter_obj.sub_asset_class_name,
+            filter_obj.sub_asset_class_name__in,
+            filter_obj.product_type_name,
+            filter_obj.product_type_name__in,
+            filter_obj.data_type_name,
+            filter_obj.data_type_name__in,
+            filter_obj.structure_type_name,
+            filter_obj.structure_type_name__in,
+            filter_obj.market_segment_name,
+            filter_obj.market_segment_name__in,
+            filter_obj.field_type_name,
+            filter_obj.field_type_name__in,
+        ]
+        return any(metadata_filter_fields)
+    
+    def _build_order_by_clause(self, filter_obj: valueDataFilter) -> str:
+        """Build ORDER BY clause from filter object."""
+        if not filter_obj.order_by:
+            return "ORDER BY timestamp DESC"
+        
+        order_parts = []
+        for order_field in filter_obj.order_by:
+            field_name = order_field[1:] if order_field.startswith('-') else order_field
+            direction = "DESC" if order_field.startswith('-') else "ASC"
+            order_parts.append(f"{field_name} {direction}")
+        
+        return f"ORDER BY {', '.join(order_parts)}"
+    
+    def _build_meta_series_conditions(
+        self, 
+        filter_obj: valueDataFilter
+    ) -> tuple[list, dict[str, bool]]:
+        """Build metaSeries filter conditions and track which joins are needed."""
+        conditions = []
         joins_needed = {
             'asset_class': False,
             'sub_asset_class': False,
@@ -62,220 +124,302 @@ class CRUDValueData(CRUDBase[ValueData]):
             'field_type': False,
         }
         
-        # Build conditions for filters that require MetaSeries join
-        conditions = []
-        
-        # Direct ValueData filters
-        if filter_obj.series_id is not None:
-            conditions.append(ValueData.series_id == filter_obj.series_id)
-        if filter_obj.series_id__in is not None:
-            conditions.append(ValueData.series_id.in_(cast(list[int], filter_obj.series_id__in)))
-        
-        # Handle humanized timestamp filter (e.g., "1y", "2y", "20m")
-        if filter_obj.timestamp__ago is not None:
-            # Parse humanized time string to seconds
-            seconds_ago = pytimeparse2.parse(filter_obj.timestamp__ago)
-            if seconds_ago is not None:
-                # Calculate the date that is X time ago from now
-                time_ago = datetime.now() - timedelta(seconds=seconds_ago)
-                date_ago = time_ago.date()
-                # Filter for data from that date onwards (historical data from X time ago to now)
-                conditions.append(ValueData.timestamp >= date_ago)
-        
-        if filter_obj.timestamp__gte is not None:
-            conditions.append(ValueData.timestamp >= filter_obj.timestamp__gte)
-        if filter_obj.timestamp__lte is not None:
-            conditions.append(ValueData.timestamp <= filter_obj.timestamp__lte)
-        if filter_obj.is_latest is not None:
-            conditions.append(ValueData.is_latest == filter_obj.is_latest)
-        if filter_obj.value__gte is not None:
-            conditions.append(ValueData.value >= filter_obj.value__gte)
-        if filter_obj.value__lte is not None:
-            conditions.append(ValueData.value <= filter_obj.value__lte)
-        
-        # MetaSeries filters
+        # metaSeries direct filters
         if filter_obj.series_name__ilike is not None:
-            conditions.append(MetaSeries.series_name.ilike(f"%{filter_obj.series_name__ilike}%"))  # type: ignore[attr-defined]
+            conditions.append(metaSeries.series_name.ilike(f"%{filter_obj.series_name__ilike}%"))
+        
         if filter_obj.series_name__in is not None:
-            series_names_lower = [name.lower().strip() for name in filter_obj.series_name__in if name]
-            if series_names_lower:  # Only add condition if list is not empty
-                conditions.append(func.lower(MetaSeries.series_name).in_(series_names_lower))  # type: ignore[attr-defined]
+            condition = self._build_series_name_in_condition(filter_obj.series_name__in)
+            if condition is not None:
+                conditions.append(condition)
+        
         if filter_obj.ticker__ilike is not None:
-            conditions.append(MetaSeries.ticker.ilike(f"%{filter_obj.ticker__ilike}%"))  # type: ignore[attr-defined]
+            conditions.append(metaSeries.ticker.ilike(f"%{filter_obj.ticker__ilike}%"))
+        
         if filter_obj.is_active is not None:
-            conditions.append(MetaSeries.is_active == filter_obj.is_active)
+            conditions.append(metaSeries.is_active == filter_obj.is_active)
+        
         if filter_obj.is_derived is not None:
-            conditions.append(MetaSeries.is_derived == filter_obj.is_derived)
+            conditions.append(metaSeries.is_derived == filter_obj.is_derived)
         
-        # Lookup table filters (via MetaSeries join) - using names as primary keys for filtering
-        if filter_obj.asset_class_name is not None:
-            joins_needed['asset_class'] = True
-            conditions.append(AssetClassLookup.asset_class_name == filter_obj.asset_class_name)
-        if filter_obj.asset_class_name__in is not None:
-            joins_needed['asset_class'] = True
-            conditions.append(AssetClassLookup.asset_class_name.in_(cast(list[str], filter_obj.asset_class_name__in)))  # type: ignore[attr-defined]
-        
-        if filter_obj.sub_asset_class_name is not None:
-            joins_needed['sub_asset_class'] = True
-            conditions.append(SubAssetClassLookup.sub_asset_class_name == filter_obj.sub_asset_class_name)
-        if filter_obj.sub_asset_class_name__in is not None:
-            joins_needed['sub_asset_class'] = True
-            conditions.append(SubAssetClassLookup.sub_asset_class_name.in_(cast(list[str], filter_obj.sub_asset_class_name__in)))  # type: ignore[attr-defined]
-        
-        if filter_obj.product_type_name is not None:
-            joins_needed['product_type'] = True
-            conditions.append(ProductTypeLookup.product_type_name == filter_obj.product_type_name)
-        if filter_obj.product_type_name__in is not None:
-            joins_needed['product_type'] = True
-            conditions.append(ProductTypeLookup.product_type_name.in_(cast(list[str], filter_obj.product_type_name__in)))  # type: ignore[attr-defined]
-        
-        if filter_obj.data_type_name is not None:
-            joins_needed['data_type'] = True
-            conditions.append(DataTypeLookup.data_type_name == filter_obj.data_type_name)
-        if filter_obj.data_type_name__in is not None:
-            joins_needed['data_type'] = True
-            conditions.append(DataTypeLookup.data_type_name.in_(cast(list[str], filter_obj.data_type_name__in)))  # type: ignore[attr-defined]
-        
-        if filter_obj.structure_type_name is not None:
-            joins_needed['structure_type'] = True
-            conditions.append(StructureTypeLookup.structure_type_name == filter_obj.structure_type_name)
-        if filter_obj.structure_type_name__in is not None:
-            joins_needed['structure_type'] = True
-            conditions.append(StructureTypeLookup.structure_type_name.in_(cast(list[str], filter_obj.structure_type_name__in)))  # type: ignore[attr-defined]
-        
-        if filter_obj.market_segment_name is not None:
-            joins_needed['market_segment'] = True
-            conditions.append(MarketSegmentLookup.market_segment_name == filter_obj.market_segment_name)
-        if filter_obj.market_segment_name__in is not None:
-            joins_needed['market_segment'] = True
-            conditions.append(MarketSegmentLookup.market_segment_name.in_(cast(list[str], filter_obj.market_segment_name__in)))  # type: ignore[attr-defined]
-        
-        if filter_obj.field_type_name is not None:
-            joins_needed['field_type'] = True
-            conditions.append(FieldTypeLookup.field_type_name == filter_obj.field_type_name)
-        if filter_obj.field_type_name__in is not None:
-            joins_needed['field_type'] = True
-            conditions.append(FieldTypeLookup.field_type_name.in_(cast(list[str], filter_obj.field_type_name__in)))  # type: ignore[attr-defined]
-        
-        # Add joins for lookup tables when needed
-        if joins_needed['asset_class']:
-            query = query.join(AssetClassLookup, MetaSeries.asset_class_id == AssetClassLookup.asset_class_id)
-        if joins_needed['sub_asset_class']:
-            query = query.join(SubAssetClassLookup, MetaSeries.sub_asset_class_id == SubAssetClassLookup.sub_asset_class_id)
-        if joins_needed['product_type']:
-            query = query.join(ProductTypeLookup, MetaSeries.product_type_id == ProductTypeLookup.product_type_id)
-        if joins_needed['data_type']:
-            query = query.join(DataTypeLookup, MetaSeries.data_type_id == DataTypeLookup.data_type_id)
-        if joins_needed['structure_type']:
-            query = query.join(StructureTypeLookup, MetaSeries.structure_type_id == StructureTypeLookup.structure_type_id)
-        if joins_needed['market_segment']:
-            query = query.join(MarketSegmentLookup, MetaSeries.market_segment_id == MarketSegmentLookup.market_segment_id)
-        if joins_needed['field_type']:
-            query = query.join(FieldTypeLookup, MetaSeries.flds_id == FieldTypeLookup.field_type_id)
-        
-        # Apply all conditions
-        if conditions:
-            query = query.where(and_(*conditions))  # type: ignore[arg-type]
-        
-        # Apply ordering
-        if filter_obj.order_by:
-            query = self._apply_ordering(query, filter_obj.order_by)
-        else:
-            # Default ordering by timestamp descending
-            from sqlalchemy import desc
-            query = query.order_by(desc(ValueData.timestamp))
-        
-        # Eagerly load relationships to avoid N+1 queries
-        # Since we already joined MetaSeries, use contains_eager for the series
-        # SQLAlchemy will optimize and not create duplicate joins for lookup tables already joined for filtering
-        from sqlalchemy.orm import contains_eager, joinedload
-        
-        # Get the relationship attributes from MetaSeries
-        asset_class_rel = getattr(MetaSeries, 'asset_class')
-        sub_asset_class_rel = getattr(MetaSeries, 'sub_asset_class')
-        product_type_rel = getattr(MetaSeries, 'product_type')
-        data_type_rel = getattr(MetaSeries, 'data_type')
-        structure_type_rel = getattr(MetaSeries, 'structure_type')
-        market_segment_rel = getattr(MetaSeries, 'market_segment')
-        field_type_rel = getattr(MetaSeries, 'field_type')
-        
-        # Use joinedload for all relationships - SQLAlchemy will optimize duplicate joins
-        query = query.options(
-            contains_eager(ValueData.series).joinedload(asset_class_rel),  # type: ignore[arg-type]
-            contains_eager(ValueData.series).joinedload(sub_asset_class_rel),  # type: ignore[arg-type]
-            contains_eager(ValueData.series).joinedload(product_type_rel),  # type: ignore[arg-type]
-            contains_eager(ValueData.series).joinedload(data_type_rel),  # type: ignore[arg-type]
-            contains_eager(ValueData.series).joinedload(structure_type_rel),  # type: ignore[arg-type]
-            contains_eager(ValueData.series).joinedload(market_segment_rel),  # type: ignore[arg-type]
-            contains_eager(ValueData.series).joinedload(field_type_rel),  # type: ignore[arg-type]
-        )
-        
-        result = await db.execute(query)
-        return list(result.scalars().all())
-
-    def _apply_value_data_filters(self, query: Select, filter_obj: ValueDataFilter) -> Select:
-        """Apply filters to a ValueData query."""
-        conditions = []
-        
-        if filter_obj.series_id is not None:
-            conditions.append(ValueData.series_id == filter_obj.series_id)
-        if filter_obj.series_id__in is not None:
-            conditions.append(ValueData.series_id.in_(cast(list[int], filter_obj.series_id__in)))
-        if filter_obj.timestamp__gte is not None:
-            conditions.append(ValueData.timestamp >= filter_obj.timestamp__gte)
-        if filter_obj.timestamp__lte is not None:
-            conditions.append(ValueData.timestamp <= filter_obj.timestamp__lte)
         if filter_obj.is_latest is not None:
-            conditions.append(ValueData.is_latest == filter_obj.is_latest)
-        if filter_obj.value__gte is not None:
-            conditions.append(ValueData.value >= filter_obj.value__gte)
-        if filter_obj.value__lte is not None:
-            conditions.append(ValueData.value <= filter_obj.value__lte)
+            conditions.append(metaSeries.is_latest == filter_obj.is_latest)
         
-        if conditions:
-            query = query.where(and_(*conditions))  # type: ignore[arg-type]
-        return query
-
-    def _apply_ordering(self, query: Select, order_by: Optional[list[str]]) -> Select:
-        """Apply ordering to a query."""
-        if not order_by:
-            return query
+        # Lookup table filters - using a map for cleaner code
+        lookup_filter_map = {
+            'asset_class_name': (assetClassLookup, 'asset_class', 'asset_class_name'),
+            'asset_class_name__in': (assetClassLookup, 'asset_class', 'asset_class_name'),
+            'sub_asset_class_name': (subAssetClassLookup, 'sub_asset_class', 'sub_asset_class_name'),
+            'sub_asset_class_name__in': (subAssetClassLookup, 'sub_asset_class', 'sub_asset_class_name'),
+            'product_type_name': (productTypeLookup, 'product_type', 'product_type_name'),
+            'product_type_name__in': (productTypeLookup, 'product_type', 'product_type_name'),
+            'data_type_name': (dataTypeLookup, 'data_type', 'data_type_name'),
+            'data_type_name__in': (dataTypeLookup, 'data_type', 'data_type_name'),
+            'structure_type_name': (structureTypeLookup, 'structure_type', 'structure_type_name'),
+            'structure_type_name__in': (structureTypeLookup, 'structure_type', 'structure_type_name'),
+            'market_segment_name': (marketSegmentLookup, 'market_segment', 'market_segment_name'),
+            'market_segment_name__in': (marketSegmentLookup, 'market_segment', 'market_segment_name'),
+            'field_type_name': (fieldTypeLookup, 'field_type', 'field_type_name'),
+            'field_type_name__in': (fieldTypeLookup, 'field_type', 'field_type_name'),
+        }
         
-        from sqlalchemy import asc, desc
-        for order_field in order_by:
-            if order_field.startswith('-'):
-                field_name = order_field[1:]
-                query = query.order_by(desc(getattr(ValueData, field_name)))
-            else:
-                query = query.order_by(asc(getattr(ValueData, order_field)))
+        for field, (lookup_model, join_key, field_name) in lookup_filter_map.items():
+            value = getattr(filter_obj, field, None)
+            if value is not None:
+                joins_needed[join_key] = True
+                lookup_field = getattr(lookup_model, field_name)
+                if '__in' in field:
+                    conditions.append(lookup_field.in_(cast(list[str], value)))
+                else:
+                    conditions.append(lookup_field == value)
+        
+        return conditions, joins_needed
+    
+    def _build_series_name_in_condition(self, series_names: list[str]) -> Optional[Any]:
+        """Build condition for series_name__in filter."""
+        series_names_lower = [name.lower().strip() for name in series_names if name]
+        if series_names_lower:
+            return func.lower(metaSeries.series_name).in_(series_names_lower)
+        return None
+    
+    def _apply_lookup_joins(
+        self, 
+        query, 
+        joins_needed: dict[str, bool]
+    ):
+        """Apply necessary joins to the query based on joins_needed dict."""
+        join_map = {
+            'asset_class': (assetClassLookup, metaSeries.asset_class_id == assetClassLookup.asset_class_id),
+            'sub_asset_class': (subAssetClassLookup, metaSeries.sub_asset_class_id == subAssetClassLookup.sub_asset_class_id),
+            'product_type': (productTypeLookup, metaSeries.product_type_id == productTypeLookup.product_type_id),
+            'data_type': (dataTypeLookup, metaSeries.data_type_id == dataTypeLookup.data_type_id),
+            'structure_type': (structureTypeLookup, metaSeries.structure_type_id == structureTypeLookup.structure_type_id),
+            'market_segment': (marketSegmentLookup, metaSeries.market_segment_id == marketSegmentLookup.market_segment_id),
+            'field_type': (fieldTypeLookup, metaSeries.flds_id == fieldTypeLookup.field_type_id),
+        }
+        
+        for join_key, (lookup_model, join_condition) in join_map.items():
+            if joins_needed.get(join_key, False):
+                query = query.join(lookup_model, join_condition)
+        
         return query
+    
+    def _convert_rows_to_value_data(self, rows: list) -> list[valueData]:
+        """Convert ClickHouse query result rows to valueData objects."""
+        return [
+            valueData(
+                series_id=row[0],
+                timestamp=row[1],
+                value=Decimal(str(row[2])),
+                created_at=row[3],
+                updated_at=row[4],
+            )
+            for row in rows
+        ]
 
-    async def get_derived(
+    async def get_by_id(
+        self,
+        *,
+        series_id: int,
+        timestamp: date,
+    ) -> Optional[valueData]:
+        """Get value data by series_id and timestamp."""
+        def _sync_query():
+            query = """
+            SELECT 
+                series_id,
+                timestamp,
+                value,
+                created_at,
+                updated_at
+            FROM value_data
+            WHERE series_id = {series_id:UInt32} AND timestamp = {timestamp:Date}
+            LIMIT 1
+            """
+            return self.client.query(
+                query,
+                parameters={
+                    'series_id': series_id,
+                    'timestamp': timestamp,
+                }
+            )
+        
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _sync_query)
+        
+        if result.result_rows:
+            row = result.result_rows[0]
+            return valueData(
+                series_id=row[0],
+                timestamp=row[1],
+                value=Decimal(str(row[2])),
+                created_at=row[3],
+                updated_at=row[4],
+            )
+        return None
+
+    async def get_multi_with_filters(
         self,
         db: AsyncSession,
         *,
-        filter_obj: ValueDataFilter,
-    ) -> list[ValueData]:
-        """Get derived value data (from series where is_derived=True)."""
-        # Force is_derived=True for this method
-        filter_obj.is_derived = True
-        return await self.get_multi_with_filters(db=db, filter_obj=filter_obj)
+        filter_obj: valueDataFilter,
+    ) -> list[valueData]:
+        """Get multiple value data records with filters.
+        
+        This method queries ClickHouse for value_data and PostgreSQL for metadata.
+        It then combines the results.
+        """
+        # Build ClickHouse query conditions
+        conditions, params = self._build_clickhouse_conditions(filter_obj)
+        
+        # Handle metadata filters via PostgreSQL query
+        if self._has_metadata_filters(filter_obj):
+            series_ids_filter = await self._get_filtered_series_ids(db, filter_obj)
+            if not series_ids_filter:
+                return []
+            conditions.append(f"series_id IN ({','.join(map(str, series_ids_filter))})")
+        
+        # Build query components
+        where_clause = " AND ".join(conditions) if conditions else "1=1"
+        order_by = self._build_order_by_clause(filter_obj)
+        
+        # Execute ClickHouse query
+        def _sync_query():
+            query = f"""
+            SELECT 
+                series_id,
+                timestamp,
+                value,
+                created_at,
+                updated_at
+            FROM value_data
+            WHERE {where_clause}
+            {order_by}
+            """
+            return self.client.query(query, parameters=params)
+        
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _sync_query)
+        
+        return self._convert_rows_to_value_data(result.result_rows)
+
+    async def _get_filtered_series_ids(
+        self,
+        db: AsyncSession,
+        filter_obj: valueDataFilter,
+    ) -> list[int]:
+        """Query PostgreSQL to get series_ids that match metadata filters."""
+        query = select(metaSeries.series_id)
+        
+        # Build conditions and determine needed joins
+        conditions, joins_needed = self._build_meta_series_conditions(filter_obj)
+        
+        # Apply joins
+        query = self._apply_lookup_joins(query, joins_needed)
+        
+        # Apply conditions
+        if conditions:
+            query = query.where(and_(*conditions))
+        
+        result = await db.execute(query)
+        return [row[0] for row in result.all()]
+
+    async def create(
+        self,
+        *,
+        obj_in: valueData,
+    ) -> valueData:
+        """Insert value data into ClickHouse."""
+        def _sync_insert():
+            # Note: is_latest, version_number, derived_flag, dependency_calculation_id, and field_name
+            # are now on metaSeries, not valueData. Only store time-series data in ClickHouse.
+            insert_data = [[
+                obj_in.series_id,
+                obj_in.timestamp,
+                float(obj_in.value),
+                obj_in.created_at,
+                obj_in.updated_at,
+            ]]
+            
+            self.client.insert(
+                'value_data',
+                insert_data,
+                column_names=[
+                    'series_id',
+                    'timestamp',
+                    'value',
+                    'created_at',
+                    'updated_at',
+                ]
+            )
+        
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _sync_insert)
+        return obj_in
 
     async def create_with_validation(
         self,
         db: AsyncSession,
         *,
-        obj_in: ValueData,
-    ) -> ValueData:
+        obj_in: valueData,
+    ) -> valueData:
         """Create value data with series validation."""
-        # Verify series exists
-        series_query = select(MetaSeries).where(MetaSeries.series_id == obj_in.series_id)
+        # Verify series exists in PostgreSQL
+        series_query = select(metaSeries).where(metaSeries.series_id == obj_in.series_id)
         series_result = await db.execute(series_query)
         if not series_result.scalar_one_or_none():
             raise ValueError("Series not found")
         
-        return await self.create(db, obj_in=obj_in)
+        return await self.create(obj_in=obj_in)
+
+    async def update(
+        self,
+        *,
+        series_id: int,
+        timestamp: date,
+        obj_in: dict,
+    ) -> Optional[valueData]:
+        """Update value data in ClickHouse.
+        
+        Note: ClickHouse doesn't support traditional UPDATE operations efficiently.
+        This implementation deletes the old row and inserts a new one.
+        For production, consider using ReplacingMergeTree engine or ALTER TABLE UPDATE.
+        """
+        # Get existing record
+        existing = await self.get_by_id(series_id=series_id, timestamp=timestamp)
+        if not existing:
+            return None
+        
+        # Create updated record
+        # Access attributes from valueData instance (works at runtime even with Column definitions)
+        # Note: is_latest, version_number, derived_flag, dependency_calculation_id, and field_name
+        # are now on metaSeries, not valueData
+        updated = valueData(
+            series_id=obj_in.get('series_id', getattr(existing, 'series_id', None)),  # type: ignore
+            timestamp=obj_in.get('timestamp', getattr(existing, 'timestamp', None)),  # type: ignore
+            value=obj_in.get('value', getattr(existing, 'value', None)),  # type: ignore
+            created_at=obj_in.get('created_at', getattr(existing, 'created_at', None)),  # type: ignore
+            updated_at=datetime.utcnow(),
+        )
+        
+        # Note: ClickHouse doesn't support UPDATE operations efficiently.
+        # For production, consider using ReplacingMergeTree engine.
+        # For now, we'll insert a new version with updated data.
+        # Note: is_latest filtering is now done via metaSeries in PostgreSQL
+        return await self.create(obj_in=updated)
+
+    async def get_derived(
+        self,
+        db: AsyncSession,
+        *,
+        filter_obj: valueDataFilter,
+    ) -> list[valueData]:
+        """Get derived value data (from series where is_derived=True)."""
+        filter_obj.is_derived = True
+        return await self.get_multi_with_filters(db=db, filter_obj=filter_obj)
 
 
-# Create instance
-crud_value_data = CRUDValueData(ValueData)
+def get_crud_value_data(clickhouse_client: clickhouse_connect.driver.Client) -> crudValueData:
+    """Factory function to create CRUD instance."""
+    return crudValueData(clickhouse_client)
+

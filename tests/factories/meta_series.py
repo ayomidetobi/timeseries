@@ -4,16 +4,16 @@ from faker import Faker
 from decimal import Decimal
 from datetime import datetime
 
-from app.models.meta_series import MetaSeries, DataSource
+from app.models.meta_series import metaSeries, dataSource
 
 fake = Faker()
 
 
-class MetaSeriesFactory(factory.Factory):
+class metaSeriesFactory(factory.Factory):
     """Factory for MetaSeries."""
     
     class Meta:
-        model = MetaSeries
+        model = metaSeries
     
     series_name = factory.LazyAttribute(lambda x: fake.company() + " " + fake.word().title())
     asset_class_id = None  # Will be set in tests
@@ -33,7 +33,7 @@ class MetaSeriesFactory(factory.Factory):
     is_derived = factory.LazyAttribute(lambda x: fake.boolean(chance_of_getting_true=30))
     calculation_method = factory.LazyAttribute(lambda x: fake.random_element(elements=("Weighted Average", "Sum", "Product", "Ratio")) if fake.boolean() else None)
     data_quality_score = factory.LazyAttribute(lambda x: Decimal(str(fake.pyfloat(left_digits=0, right_digits=2, min_value=0, max_value=1))) if fake.boolean() else None)
-    source = factory.LazyAttribute(lambda x: fake.random_element(elements=[DataSource.RAW, DataSource.DERIVED]) if fake.boolean() else None)
+    source = factory.LazyAttribute(lambda x: fake.random_element(elements=[dataSource.RAW, dataSource.DERIVED]) if fake.boolean() else None)
 
     confidence_level = factory.LazyAttribute(lambda x: fake.random_element(elements=("HIGH", "MEDIUM", "LOW")) if fake.boolean() else None)
     effective_date = factory.LazyAttribute(lambda x: fake.date_time_between(start_date="-1y", end_date="now") if fake.boolean() else None)
